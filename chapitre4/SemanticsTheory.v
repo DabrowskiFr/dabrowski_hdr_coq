@@ -805,13 +805,13 @@ Qed.
       reduceA nprocs i (Seq (Seq s1 s2) s3, sigma) p v ->
       reduceA nprocs i (Seq s1 (Seq s2 s3), sigma) p v
   .
-  Admitted.
+
 
   Lemma reduceA_det :
     forall nprocs i st p p' v v',
       reduceA nprocs i st p v ->
       reduceA nprocs i st p' v' -> p = p' /\ v = v'.
-  Admitted.
+
 *)
 
 
@@ -859,13 +859,13 @@ Qed.
       = VT.map Some vsigma' ->
       reachable nprocs (inl (replicate (Assign x0 e) vsigma)) (inr vsigma').
   Proof.
-  Admitted.*)
+  *)
   
 
 
   (* Lemma step_deterministic :
     ∀ (X Y Z : V.t (stmt * store) + V.t store),
       step X Y -> step X Z -> Y = Z. 
-  Admitted. easy *)
+ easy *)
 
 End SemanticsTheory.

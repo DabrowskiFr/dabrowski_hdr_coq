@@ -174,60 +174,55 @@ Module AlignmentTheory (Import P : Process) (Import V : Vector P).
 
 (** *** Alignment preserved through steps *)  
 
-  Lemma aligned_skip : ∀ Σ, aligned_for SKIP Σ.
+(*  Lemma aligned_skip : ∀ Σ, aligned_for SKIP Σ.
   Proof. 
     intros Σ.
     unfold aligned_for.
     intros vst H i j st_i st_j p_i p_j st_i' st_j' H0 H1 H2 H3.
-  Admitted.
+    *)
 
-  Lemma aligned_assign : ∀ Σ x e, aligned_for (x::=e) Σ.
+(*  Lemma aligned_assign : ∀ Σ x e, aligned_for (x::=e) Σ.
   Proof.
     intros Σ.
     unfold aligned_for.
     intros vst H i j st_i st_j p_i p_j st_i' st_j' H0 H1 H2 H3.
-  Admitted. (* easy *)
+    *)
 
-  Lemma aligned_sync : ∀ Σ, aligned_for SYNC Σ.
+(*  Lemma aligned_sync : ∀ Σ, aligned_for SYNC Σ.
   Proof.
-  intros Σ.
-  Admitted. (* to be removed *)
+  intros Σ.*)
 
-  Lemma aligned_seq1 : forall s1 s2 Σ,
+(*  Lemma aligned_seq1 : forall s1 s2 Σ,
     aligned_for (s1;;s2) Σ -> aligned_for s1 Σ.
-  Proof.
-  Admitted.
+  Proof.*)
 
-  Lemma aligned_seq2 : forall s1 s2 (Σ Σ' : V.t store),
+
+(*  Lemma aligned_seq2 : forall s1 s2 (Σ Σ' : V.t store),
     aligned_for (s1;;s2) Σ -> ⦉s1, Σ⦊ ⟹ inr Σ' ->
-    aligned_for s2 Σ'.
-  Proof.
-  Admitted.
-
-  Lemma aligned_if1 :
+    aligned_for s2 Σ'.*)
+  
+(*  Lemma aligned_if1 :
     ∀ (Σ : V.t store) b s1 s2,
       alltrue Σ b ->
       aligned_for (If b s1 s2) Σ ->
       aligned_for s1 Σ.
-  Proof.
-  Admitted.
+  Proof.*)
 
-  Lemma aligned_if2 : 
+(*  Lemma aligned_if2 : 
     ∀ (Σ : V.t store) b s1 s2,
       (∀ i σ_i, π i Σ = Some σ_i -> beval b i σ_i = false) ->
       aligned_for (If b s1 s2) Σ ->
       aligned_for s2 Σ.
-  Proof.
-  Admitted.
+  Proof.*)
 
-  Lemma aligned_while :
+
+(*  Lemma aligned_while :
   ∀ (Σ : V.t store) b s,
     aligned_for (While b s) Σ ->
     alltrue Σ b->
     (∀ (i : nat) (σ_i : store), π i Σ = Some σ_i → beval b i σ_i = true) ->
     aligned_for (Seq s (While b s)) Σ.
-  Proof.
-  Admitted. (* easy *)
+  Proof.*)
 
 End AlignmentTheory.
 
@@ -242,36 +237,36 @@ End AlignmentTheory.
   Lemma alltrue_dec :
     ∀ Σ b, alltrue Σ b \/ ¬ alltrue Σ b.
   Proof.
-  Admitted. easy *)
+   easy *)
 
   (* Lemma allfalse_dec :
     ∀ Σ b, allfalse Σ b \/ ¬ allfalse Σ b.
   Proof.
-  Admitted. (* easy *)
+   (* easy *)
 
   Lemma select_alltrue :
     ∀ (Σ : V.t store) b,
       alltrue Σ b ->
       select (beval b) (fmap Some Σ) = fmap Some Σ.
-  Admitted. (* easy *)
+   (* easy *)
   
   Lemma select_alltrue_neg :
     ∀ (Σ : V.t store) b,
       alltrue Σ b ->
       select (beval (Not b)) (fmap Some Σ)= make (fun _ =>  None).
-  Admitted. (* easy *)
+  (* easy *)
 
   Lemma select_allfalse :
     ∀ (Σ : V.t store) b,
       allfalse Σ b ->
       select (beval (Not b)) (fmap Some Σ) = fmap Some Σ.
-  Admitted. (* easy *)
+ (* easy *)
 
   Lemma select_allfalse_neg :
     ∀ (Σ : V.t store) b,
       allfalse Σ b ->
       select (beval b) (fmap Some Σ) = make (fun _ =>  None).
-  Admitted. (* easy *)
+ (* easy *)
 
   Lemma selecti_true:
     ∀ (b : bexpr) (Σ : V.t (option store)) (i : nat) (σ_i : store), 
@@ -279,7 +274,7 @@ End AlignmentTheory.
       → beval b i σ_i = true → π i (select (beval b) Σ) = Some (Some σ_i).
   Proof.
     intros b Σ i σ_i H__EQ1 H5.
-  Admitted. (* easy *)
+  (* easy *)
 
   Lemma selecti_false:
     ∀ (b : bexpr) (Σ : V.t (option store)) (i : nat) (σ_i : store), 
@@ -288,7 +283,7 @@ End AlignmentTheory.
       → π i (select (beval (Not b)) Σ) = Some (Some σ_i).
   Proof.
     intros b Σ i σ_i H__EQ1 H5.
-  Admitted. (* easy *)
+ (* easy *)
 
   Lemma selecti_neg_pos:
     ∀ (b : bexpr) (Σ : V.t (option store)) (i : nat) (σ_i : store), 
@@ -296,7 +291,7 @@ End AlignmentTheory.
       → π i (select (beval b) Σ) = Some None.
   Proof.
     intros b Σ i σ_i HE.
-  Admitted. (* easy *)
+ (* easy *)
 
   Lemma selecti_pos_neg:
     ∀ (b : bexpr) (Σ : V.t (option store)) (i : nat) (σ_i : store), 
@@ -304,14 +299,14 @@ End AlignmentTheory.
       → π i (select (beval (Not b)) Σ) = Some None.
   Proof.
     intros b Σ i σ_i HE.
-  Admitted. (* easy *)
+ (* easy *)
 
   Lemma selecti_none_pos:
     ∀ (b : bexpr) (Σ : V.t (option store)) (i : nat), 
       π i Σ = Some None → π i (select (beval b) Σ) = Some None.
   Proof.
     intros b Σ i HE.
-  Admitted. (* easy *)
+ (* easy *)
 
   Lemma selecti_none_neg:
     ∀ (b : bexpr) (Σ : V.t (option store)) (i : nat), 
@@ -319,7 +314,7 @@ End AlignmentTheory.
       → π i (select (beval (Not b)) Σ) = Some None.
   Proof.
     intros b Σ i HE.
-  Admitted. easy *)
+ easy *)
   
 
   
@@ -379,7 +374,7 @@ End AlignmentTheory.
     intros Σ.
     unfold aligned_for.
     intros vst H i j st_i st_j p_i p_j st_i' st_j' H0 H1 H2 H3.
-  Admitted. easy *)
+   easy *)
 
   (* Notation updateall Σ x e :=
     (mapi (fun i σ => update σ x (eval e i σ)) Σ). *)
@@ -411,7 +406,7 @@ End AlignmentTheory.
     intros Σ.
     unfold aligned_for.
     intros vst H i j st_i st_j p_i p_j st_i' st_j' H0 H1 H2 H3.
-  Admitted. easy *)
+ easy *)
 
   (* Lemma step_replicate_sync : ∀ (Σ : V.t store),
       ⦉SYNC, Σ⦊ ⟶ inl ⦉SKIP, Σ⦊.
@@ -426,7 +421,7 @@ End AlignmentTheory.
   (* Lemma reachable_replicate_sync :
     forall (Σ : t store), ⦉SYNC, Σ⦊ ⟹ inr Σ.
   Proof.
-  Admitted. *)
+ *)
     (* intros vsigma.
     apply rt_trans with (y := inl (replicate Skip vsigma)).
     - apply rt_step.
@@ -443,7 +438,7 @@ End AlignmentTheory.
   (* Lemma aligned_sync : ∀ Σ, aligned_for SYNC Σ.
   Proof.
     intros Σ.
-  Admitted. to be removed *)
+  to be removed *)
 
 
   (* Lemma step_replicate_seq1 :
@@ -483,7 +478,7 @@ End AlignmentTheory.
       (⦉s1, Σ⦊ ⟹ inl ⦉s1', Σ'⦊) ->
       (⦉s1;;s2, Σ⦊ ⟹ inl ⦉s1';;s2, Σ'⦊).
   Proof.
-  Admitted. easy *)
+easy *)
 
   (* Lemma step_replicate_seq2 :
     ∀ (Σ : V.t store) s1 s2 Σ' X,
@@ -567,13 +562,13 @@ End AlignmentTheory.
   Proof.
     intros s1 s2 Σ Σ' X H H0.
     (* constructor 3 with (C' := inr Σ'). *)
-  Admitted. (* easy *)
+  (* easy *)
 
 
   Lemma aligned_seq1 : forall s1 s2 Σ,
       aligned_for (s1;;s2) Σ -> aligned_for s1 Σ.
   Proof.
-  Admitted. *)
+ *)
 (*    intros s1 s2 sigma H.
     unfold aligned_for in *.
     intros vst H0 i j st_i st_j p_i p_j st_i' st_j' H1 H2 H3 H4.
@@ -600,7 +595,7 @@ End AlignmentTheory.
       aligned_for (s1;;s2) Σ -> ⦉s1, Σ⦊ ⟹ inr Σ' ->
       aligned_for s2 Σ'.
   Proof.
-  Admitted. *)
+  *)
   (*
     intros s1 s2 vsigma vsigma' H_aligned H_reachable_s1.
     unfold aligned_for.
@@ -749,7 +744,7 @@ Qed. *)
       (⦉s1,Σ⦊ ⟹ Γ) ->
       (⦉IFB b THEN s1 ELSE s2 FI, Σ⦊ ⟹ Γ) \/ Γ = inl ⦉s1, Σ⦊.
   Proof.
-  Admitted. *)
+ *)
   (*
   intros Σ b s1 s2 Γ H H0.
   dependent induction H0.
@@ -792,7 +787,7 @@ Qed. *)
       (⦉s2, Σ⦊ ⟶ X)  ->
       (⦉IFB b THEN s1 ELSE s2 FI, Σ⦊ ⟶ X).
   Proof.
-  Admitted. *)
+ *)
   (*
     intros Σ b s1 s2 Γ H H0.
     inversion H0; subst.
@@ -841,7 +836,7 @@ Qed. *)
      (⦉s2, Σ⦊ ⟹ Γ) ->
      (⦉IFB b THEN s1 ELSE s2 FI, Σ⦊ ⟹ Γ) \/ Γ = inl ⦉s2, Σ⦊.
  Proof.
- Admitted. *)
+ *)
  (*
    intros Σ b s1 s2 Γ H H0.
    dependent induction H0.
@@ -865,7 +860,7 @@ Qed. *)
       aligned_for (If b s1 s2) Σ ->
       aligned_for s1 Σ.
   Proof.
-  Admitted. *)
+ *)
   (*
     intros Σ b s1 s2 H H0.
     unfold aligned_for in *.
@@ -894,7 +889,7 @@ Qed. *)
       aligned_for (If b s1 s2) Σ ->
       aligned_for s2 Σ.
   Proof.
-  Admitted. *)
+ *)
   (*
     intros Σ b s1 s2 H H0.
     unfold aligned_for in *.
@@ -923,7 +918,7 @@ Qed. *)
       ∀ Σ'',(⦉WHILE b DO s END, Σ'⦊ ⟶ inr Σ'') → 
             (⦉WHILE b DO s END, Σ⦊ ⟶ inr Σ'').
   Proof.
-  Admitted. *)
+   *)
   (*
     intros Σ b s Σ' H H0 Σ'' H1.
     apply step_continue.
@@ -973,7 +968,7 @@ Qed. *)
       (∀ i : nat, i < p → ∃ σ_i : store, π i Σ = Some σ_i ∧ beval b i σ_i = true) /\
       step ((replicate (Seq s (While b s)) Σ)) (inl (replicate s' Σ')).
   Proof.
-  Admitted. easy *)
+   easy *)
 
 
   (* Lemma aligned_while :
@@ -983,14 +978,14 @@ Qed. *)
       (∀ (i : nat) (σ_i : store), π i Σ = Some σ_i → beval b i σ_i = true) ->
       aligned_for (Seq s (While b s)) Σ.
   Proof.
-  Admitted. easy *)
+easy *)
 
 
   
   (* Lemma step_replicate_inr :
     ∀ s Σ Σ', inl ⦉ s, Σ ⦊ ⟶ inr Σ' -> aligned_for s Σ.
   Proof.
-  Admitted. easy *)
+ easy *)
  
 
 (*    intros Σ s1 s2 Γ H__aligned H__step.
@@ -1143,7 +1138,7 @@ Qed. *)
       aligned_for s1 Σ.
   Proof.
     intros b s1 s2 Σ H.
-  Admitted.
+ 
 
   
   Lemma  aligned_if2_inv:
