@@ -1,0 +1,6 @@
+(coq.theory
+ (name sections.common)
+ (package sections)
+ (theories sections.lifo)
+ (coqdoc_flags :standard --utf8 --gallina)
+ )
