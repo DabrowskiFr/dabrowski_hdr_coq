@@ -46,9 +46,24 @@ Module Make (Perm : MiniDecidableSet)
   Fact owns_s_se : 
     forall s p t, owns s p t -> forall e, owns (s • e) p t.
   Proof.
-  Admitted.
-    (* inversion 1; eauto with nth_error.
-  Qed. *)
+    intros s p t Howns e. 
+    inversion Howns; subst.
+    assert (pi i s = pi i (s • e)).
+    {
+      assert (i < length s).
+      apply nth_error_defined_lt.
+      case_eq (pi i s); intros.
+      exists t0; reflexivity.
+      rewrite H in HThreadOf.
+      discriminate.
+      symmetry.
+      apply nth_error_append_left.
+      assumption.
+    }
+    apply owns_cons with (i :=i).
+    rewrite <- H; assumption.
+    rewrite <- H; assumption.
+  Qed.
   
   Fact owns_se_s : 
     forall (s : Tr) e p t, owns (s • e) p t -> e <> (t, Open p) -> owns s p t.

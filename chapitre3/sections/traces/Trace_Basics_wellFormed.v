@@ -41,15 +41,19 @@ Module Make (Perm : MiniDecidableSet)
     destruct h_sec_order.
     - assert (k <  length s).
       {
-        admit.
-        (* assert (k < length (s • (t,a))) by eauto with nth_error.
-        autorewrite with length in H3; simpl in H3.
+        assert (k < length (s • (t,a))) by eauto with nth_error.
+        replace (length (s • (t, a))) with (S (length s)) in H3.
         assert (k <> length s).
-        intro; subst.
-        autorewrite with nth_error in H1.
-        injection H1; intros; subst.
-        exfalso; intuition.
-        intuition. *)
+        {
+          intro; subst.
+          autorewrite with nth_error in H1.
+          injection H1; intros; subst.
+          intuition.
+        }
+        lia.
+        rewrite app_length.
+        simpl.
+        lia.
       }
       assert (i <  length s) by auto with *.
       case_eq  (pi k (s • (t,a)));
@@ -90,26 +94,34 @@ Module Make (Perm : MiniDecidableSet)
     - assert (i' <  length s).
       {
         assert (i' < length (s • (t,a))) by eauto with nth_error.
-        admit.
-        (* autorewrite with length in H3; simpl in H3.
+        replace (length (s • (t, a))) with (S (length s)) in H3.
         assert (i' <> length s).
-        intro; subst.
-        autorewrite with nth_error in H0.
-        injection H0; intros; subst.
-        exfalso; intuition.
-        intuition. *)
+        {
+          intro; subst.
+          autorewrite with nth_error in H0.
+          injection H0; intros; subst.
+          intuition.
+        }
+        lia.
+        rewrite app_length.
+        simpl.
+        lia.
       }
       assert (i <  length s).
       {
         assert (i < length (s • (t,a))) by eauto with nth_error.
-        admit.
-        (* autorewrite with length in H4; simpl in H4. *)
-        (* assert (i <> length s).
-        intro; subst.
-        autorewrite with nth_error in H.
-        injection H; intros; subst.
-        exfalso; intuition.
-        intuition. *)
+        replace (length (s • (t, a))) with (S (length s)) in H4.
+        assert (i <> length s).
+        {
+          intro; subst.
+          autorewrite with nth_error in H.
+          injection H; intros; subst.
+          intuition.
+        }
+        lia.
+        rewrite app_length.
+        simpl.
+        lia.
       }
       assert (forall t', (t, a) <> (t', Fork t0)).
       {
@@ -131,8 +143,7 @@ Module Make (Perm : MiniDecidableSet)
       unfold Event.t in *; congruence. 
       unfold Event.t in *; congruence. 
       apply tribe_children_se_s_not_fork with (t,a); try assumption.
-      Admitted.
-(* Qed. *)
+    Qed.
 
   Lemma concurrent_s_se : 
     forall s p p' e,

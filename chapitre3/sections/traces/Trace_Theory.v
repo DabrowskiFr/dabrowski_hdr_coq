@@ -11,6 +11,8 @@ Require Import sections.common.GenericTrace.
 Require Import sections.traces.Trace_Basics.
 Require Import sections.lifo.Length.
 Require Import Lia.
+Require Import Coq.Logic.Classical_Prop.
+
 
 (** In this section, we introduce some results about well formed trace.
      First we show that the set of wellformed trace is prefix closed. Then
@@ -24,87 +26,16 @@ Module Make (SN : MiniDecidableSet)
 
   Include Trace_Basics.Make SN Ad Ty Va.
 
+
+
   Lemma tribe_dec :
     forall s (HWFOcc : wf_occurences s) (HWFFork : wf_fork s) 
            (HWFOpenClose : wf_open_close s) p t, 
       tribe s p t \/ ~ tribe s p t.
   Proof.
-  Admitted. 
-  (* Worked before, now compilation problem: to be solved later *)
-(*
-  Proof. 
-     s using tr_indinduction; [right; auto with tribe |  ].
-    intros HWFOcc HWFFork HWFOpenClose p t.
-    
-    assert (wf_occurences s) as Ha by eauto using wf_occurences_se_s.
-    assert (wf_fork s) as Hb by eauto using wf_fork_se_s.
-    assert (wf_open_close s) as Hc by eauto using wf_open_close_se_s.
-    
-    destruct (IHs Ha Hb Hc p t); [ have H0 (tribe s p t); auto using tribe_s_se | ].
-    have H (~ tribe s p t).
-    
-    destruct e as [t' a]; destruct a; try (right; eapply tribeB; intuition discriminate).
-    
-    - destruct (Peano_dec.eq_nat_dec n t); [subst | ].
-      + assert (t <> t').
-        {
-          intro; subst.
-          elim (Lt.lt_irrefl (length (s • (t',Fork t')) - 1)).
-          apply HWFFork with (t:=t');
-            pi_simpl.
-        }
-        destruct (IHs Ha Hb Hc p t').
-        * inversion H1.
-          {
-            assert (owns (s • (t', Fork t)) p t') by eauto with owns.
-            assert (exists i j, range (s • (t', Fork t)) p i j) as [i [j HRange]] by
-                   eauto using owns_range.
-            inversion HRange; subst.
-            + assert(j<length s).
-              { 
-                destruct (lt_eq_lt_dec j (length s)) as [ [ Hlt | Heq ] | Hlt ].
-                - trivial.
-                - subst. pi_simpl. simpl in Hj. discriminate.
-                - rewrite ListBasics.nth_errorGeLength in Hj. discriminate.
-                  autorewrite with length; simpl; intuition. 
-              }
-              assert(j<length(s • (t', Fork t)) - 1) by (pi_simpl).
-              assert(range s p i j) by 
-                now apply range_se_s_lt with (e:=(t',Fork t)) in HRange.
-              right. eauto using tribeD.
-            + left. eauto using tribeC.
-          }
-          {
-            assert (tribeChildren (s • (t', Fork t)) p t).
-            {
-              assert (tribeChildren (s • (t', Fork t)) p t') by 
-                     (now apply tribeChildren_s_se).
-              assert (father (s • (t', Fork t)) t t').
-                exists (length (s • (t', Fork t)) -1). 
-                pi_simpl; split; trivial.
-              eauto using tribeChildren_indirect.
-            }
-            left; auto.
-          }
-        * right; auto using tribeA.
-      + right.
-        contradict H.
-        apply tribe_se_s_not_open_fork with (e:=(t',Fork n)); immediate.
-        
-    - destruct (Peano_dec.eq_nat_dec t t'); 
-      [ destruct (SN.eq_dec t0 p); subst |].
-      + left.
-        assert (owns (s • (t', Open p)) p t') 
-               by (apply owns_cons with (i:=length s); pi_simpl).
-        auto.
-      + right.
-        contradict H.
-        apply tribe_se_s_not_open_fork with (e:=(t', Open t0)); immediate.
-      + right. 
-        contradict H.
-        apply tribe_se_s_not_open_fork with (e:= (t', Open t0)); immediate.
+    intros.
+    apply classic.
   Qed.
-*)
 
   Lemma sec_order_dec : 
     forall s p p',
@@ -113,124 +44,9 @@ Module Make (SN : MiniDecidableSet)
       wf_open_close s ->
       (sec_order s p p') \/ (~ sec_order s p p').
   Proof.
-    intros s p p' h_wf_occ h_wf_fork h_wf_oc.
-    destruct (occursIn_dec s (Open p)).
-    - destruct (occursIn_dec s (Open p')).
-      + inversion o as [i ? hi]; subst.
-        inversion o0 as [j ? Hj]; subst.
-        case_eq (pi i s); [intros [t a] h_eq | intros].
-        case_eq (pi j s); [intros [t' a'] h_eq' | intros].
-        destruct (tribe_dec s h_wf_occ h_wf_fork h_wf_oc p t').
-        * {
-            inversion H; subst.
-            - destruct (Compare_dec.le_dec i j).
-              + destruct (occursIn_dec s (Close p)).
-                * 
-                  {
-                    inversion o1 as [k ? Hu]; subst.
-                    destruct (Compare_dec.le_dec j k).
-                    - left.
-                      apply sec_order_cons_dir with i k j.
-                      constructor 1; intuition.
-                      intuition.
-                      assumption.
-                      rewrite h_eq'; simpl.
-                      inversion H0; subst.
-                      assert (i = i0) by wellFormed_occurences (Open p); subst.
-                      assumption.
-                    - right.
-                      intro.
-                      inversion H1; subst.
-                      + assert (i0 = i) by (inversion H2; wellFormed_occurences (Open p)).
-                        assert (j0 = k).
-                        {
-                          inversion H2; subst.
-                          wellFormed_occurences (Close p).
-                          contradict HNotClosed.
-                          exists k; assumption.
-                        }
-                        assert (k0 = j) by wellFormed_occurences (Open p').
-                        subst.
-                        exfalso; intuition.
-                      + assert (i' = j) by wellFormed_occurences(Open p'); subst.
-                        assert (t0 = t').
-                        rewrite h_eq' in H4; simpl in H4.
-                        congruence.
-                        subst.
-                        edestruct tribeChildren_notOwner; eauto.
-                  }
-                * left.
-                  apply sec_order_cons_dir with i (length s - 1) j.
-                  constructor 2; try assumption.
-                  assert (j < length s) by eauto with nth_error.
-                  auto with *.
-                  assumption.
-                  inversion H0; subst.
-                  assert (i0 = i) by wellFormed_occurences (Open p); subst.
-                  rewrite HThreadOf.
-                  rewrite h_eq'; reflexivity.
-              + right.
-                intro.
-                inversion H1; subst.
-                * assert (k = j) by wellFormed_occurences (Open p'); subst.
-                  assert (i0 = i) by (inversion H2; wellFormed_occurences (Open p)); subst.
-                  exfalso; intuition.
-                * assert (i0 = i) by wellFormed_occurences (Open p); subst.
-                  assert (i' = j) by wellFormed_occurences (Open p'); subst.
-                  edestruct tribeChildren_after_open.
-                  apply h_wf_fork.
-                  apply H5.
-                  apply H4.
-                  destruct H6.
-                  assert (x = i) by wellFormed_occurences (Open p); subst.
-                  exfalso; auto with *.
-            - left.
-              apply sec_order_cons_ind with i j t'.
-              assumption.
-              assumption.
-              rewrite h_eq'; reflexivity.
-              assumption.
-          }
-        * {
-            right.
-            intro.
-            inversion H0; subst.
-            - assert (k = j) by wellFormed_occurences (Open p'); subst.
-              assert (i0 = i) by (inversion H1; wellFormed_occurences (Open p)); subst.
-              elim H.
-              constructor 1.
-              exists i.
-              rewrite h_eq' in H4; simpl in H4; assumption.
-              assumption.
-            - assert (j = i') by wellFormed_occurences (Open p'); subst.
-              rewrite h_eq' in H3; injection H3; intros; subst.
-              elim H.
-              constructor 2.
-              assumption.
-          }
-        * rewrite H in Hj; discriminate.
-        * rewrite H in hi; discriminate.
-    + right.
-      intro.
-      inversion H; subst.
-      * elim n.
-        exists k.
-        assumption.
-      * elim n.
-        exists i'.
-        assumption.
-    - right.
-      intro.
-      inversion H; subst.
-      + elim n.
-        inversion H0; subst.
-        exists i; assumption.
-        exists i; assumption.
-      + elim n; exists i; assumption.
-      Admitted.
-  (* Qed. *)
-
-
+  intros.
+  apply classic.
+  Qed.
  
   (** ** Fork / Join of tribe members *)
 
