@@ -1,4 +1,4 @@
-Require Import String List.
+From Stdlib Require Import String List.
 
 
 (** * Expressions *)
@@ -33,6 +33,8 @@ Inductive stmt :=
 | Sync : stmt.
 
 (** * Notations *)
+
+Declare Scope stmt_scope.
 
 Notation "'SKIP'" := Skip : stmt_scope.
 Notation "x '::=' a" := (Assign x a) (at level 60) : stmt_scope.

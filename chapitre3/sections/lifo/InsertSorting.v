@@ -1,8 +1,9 @@
-Require Import List.
+From Stdlib Require Import List.
 (* Require Import Sorting. *)
-Require Import Relation_Definitions.
+From Stdlib Require Import Relation_Definitions.
 (* Require Import Permutation. *)
-Require Import Setoid.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Arith Lia.
 
 Set Implicit Arguments.
 
@@ -212,27 +213,25 @@ End Sort.
 
 Section Example.
 
-Require Import Arith.
-
 Definition le_dec1 : forall n m, {n <= m} + {m <= n}.
 Proof.
 induction n.
-left. intuition.
-destruct m. right. intuition.
+left. lia.
+destruct m. right. lia.
 destruct (IHn m).
-left ; intuition.
-right ; intuition.
+left ; lia.
+right ; lia.
 Defined.
 
 Program Instance sortle : Sortable eq le eq_nat_dec le_dec1.
 Next Obligation.
-  intuition.
+  constructor; congruence.
 Qed.
 Next Obligation.
-  intros x y z H1 H2. apply le_trans with y ; intuition.
+  intros x y z H1 H2. lia.
 Qed.
 Next Obligation.
-  intuition.
+  lia.
 Qed.
 (*
 Eval compute in (projT1 (insertSorting sortle  (4::3::5::2::nil))).

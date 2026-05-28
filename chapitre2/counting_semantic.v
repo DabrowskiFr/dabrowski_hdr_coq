@@ -1,5 +1,5 @@
-Require Export EqNat.
-Require Export ZArith.
+From Stdlib Require Export EqNat.
+From Stdlib Require Export ZArith.
 Require Export sem.
 Require Export assoc_list.
 
@@ -10,7 +10,7 @@ Record cp (A B C:Set) : Set := CP {
   cp_om : B;
   cp_pi : C
 }.
-Implicit Arguments CP [A B C].
+Arguments CP {A B C} _ _ _ _ _.
 
 Lemma eq_cp : forall (A B C:Set),
   (forall x y:A, {x=y}+{x<>y}) ->
@@ -22,12 +22,12 @@ Proof.
   apply eq_line.
   apply eq_method.
 Qed.
-Implicit Arguments eq_cp [A B C].
-Implicit Arguments cp_m [A B C].
-Implicit Arguments cp_i [A B C].
-Implicit Arguments cp_c [A B C].
-Implicit Arguments cp_om [A B C].
-Implicit Arguments cp_pi [A B C].
+Arguments eq_cp {A B C} _ _ _ _ _.
+Arguments cp_m {A B C} _.
+Arguments cp_i {A B C} _.
+Arguments cp_c {A B C} _.
+Arguments cp_om {A B C} _.
+Arguments cp_pi {A B C} _.
 
 Module Type COUNTING_SEMANTIC.
 
@@ -218,13 +218,13 @@ Section step.
     memory_location' -> (frame*heap) -> (frame*heap) -> action -> Prop :=
   | step1_ctx : forall c e i i' instr m o om 
     pi pi' rho rho' s s' sigma sigma'  
-    (HYP1 : m.(body) i = Some instr)
+    (HYP1 : body m i = Some instr)
     (HYP2: step0 o (m,i,c) instr (i,s,rho,sigma) (i',s',rho',sigma') e)
     (HYP3: pi'=incr_lVect pi m c (i,i')),
     step1 o ((CP m i c om pi,s,rho),sigma) 
     ((CP m i' c om pi',s',rho'),sigma') e
   | step1_new : forall a c cid i m o o' om pi pi' rho s sigma sigma'
-    (HYP1 : m.(body) i = Some (New cid))
+    (HYP1 : body m i = Some (New cid))
     (HYP2 : fresh sigma a)
     (HYP3 : o'=(a,(CP m i c om pi)))
     (HYP4 : pi'=incr_lVect pi m c (i,next_line i))
@@ -241,7 +241,7 @@ Section step.
   | step2_invoke : forall m i mid args rtype s s' v_list
     a0 m0 i0 c0 om0 pi0 m1 c1 om1 pi1 rho1 omg omg' om pi pi' c 
     rho cs' sigma o cId
-    (H0 : m.(body) i = Some (InvokeVirtual (MethSign mid args rtype)))
+    (H0 : body m i = Some (InvokeVirtual (MethSign mid args rtype)))
     (H1 : s=v_list++(Loc (a0,CP m0 i0 c0 om0 pi0)::s'))
     (C0 : body m0 i0 = Some (New cId))
     (H2 : lookup p (MethSign mid args rtype) cId = Some m1)
@@ -257,10 +257,10 @@ Section step.
       (CP m (S i) c om pi',s',rho)::cs',sigma,omg') None
   | step2_return :
     forall o m i c om pi s rho cs sigma omg
-      (H:m.(body) i = Some Return),
+      (H:body m i = Some Return),
       step2 o ((CP m i c om pi,s,rho)::cs,sigma,omg) (cs,sigma,omg) None
   | step2_areturn : forall o m i c om pi v s rho s' rho' cs sigma omg p
-    (H:m.(body) i = Some AReturn),
+    (H:body m i = Some AReturn),
     step2 o ((CP m i c om pi,v::s,rho)::(p,s',rho')::cs,sigma,omg) 
     ((p,v::s',rho')::cs,sigma,omg) None.
   
@@ -275,7 +275,7 @@ Section step.
     step3 L (o,cs,sigma,mu,omg) (upd_thread L o cs',sigma',mu,omg') e
   | step3_start : forall m i s a0 m0 i0 c0 om0 pi0 s' m1
     c1 om1 rho1 pi' L sigma lock omg c om pi rho cs o pi1 o' cId
-    (H0 : m.(body) i = Some Run)
+    (H0 : body m i = Some Run)
     (H1 : s=(Loc o')::s')
     (HO : o'=(a0,CP m0 i0 c0 om0 pi0))
     (C0 : body m0 i0 = Some (New cId))
@@ -293,7 +293,7 @@ Section step.
             None
   | step3_enter :
     forall L m i mu mu' (o:memory_location') (o':memory_location) c om pi pi' s rho cs sigma omg
-      (H0 : m.(body) i = Some MonitorEnter)
+      (H0 : body m i = Some MonitorEnter)
       (H2 : acquire (fst o) (fst o') mu mu')
       (H3 : pi'=incr_lVect pi m c (i,S i)),
       step3 L (o,(CP m i c om pi, (Loc o')::s,rho)::cs,sigma,mu,omg)
@@ -301,7 +301,7 @@ Section step.
            None
   | step3_exit :
     forall L m i mu mu' o o' c om pi pi' s rho cs sigma omg
-      (H0 : m.(body) i = Some MonitorExit)
+      (H0 : body m i = Some MonitorExit)
       (H2 : release (fst o) (fst o') mu mu')
       (H3 : pi'=incr_lVect pi m c (i,S i)),
       step3 L (o,(CP m i c om pi, (Loc o')::s,rho)::cs,sigma,mu,omg)
@@ -593,13 +593,13 @@ Section step.
     memory_location' -> (frame*heap) -> (frame*heap) -> action -> Prop :=
   | step1_ctx : forall c e i i' instr m o om 
     pi pi' rho rho' s s' sigma sigma'  
-    (HYP1 : m.(body) i = Some instr)
+    (HYP1 : body m i = Some instr)
     (HYP2: step0 o (m,i,c) instr (i,s,rho,sigma) (i',s',rho',sigma') e)
     (HYP3: pi'=incr_lVect pi m c (i,i')),
     step1 o ((CP m i c om pi,s,rho),sigma) 
     ((CP m i' c om pi',s',rho'),sigma') e
   | step1_new : forall a c cid i m o o' om pi pi' rho s sigma sigma'
-    (HYP1 : m.(body) i = Some (New cid))
+    (HYP1 : body m i = Some (New cid))
     (HYP2 : fresh sigma a)
     (HYP3 : o'=(a,(CP m i c om pi)))
     (HYP4 : pi'=incr_lVect pi m c (i,next_line i))
@@ -616,7 +616,7 @@ Section step.
   | step2_invoke : forall m i mid args rtype s s' v_list
     a0 m0 i0 c0 om0 pi0 m1 c1 om1 pi1 rho1 omg omg' om pi pi' c 
     rho cs' sigma o cId
-    (H0 : m.(body) i = Some (InvokeVirtual (MethSign mid args rtype)))
+    (H0 : body m i = Some (InvokeVirtual (MethSign mid args rtype)))
     (H1 : s=v_list++(Loc (a0,CP m0 i0 c0 om0 pi0)::s'))
     (C0 : body m0 i0 = Some (New cId))
     (H2 : lookup p (MethSign mid args rtype) cId = Some m1)
@@ -632,10 +632,10 @@ Section step.
       (CP m (S i) c om pi',s',rho)::cs',sigma,omg') None
   | step2_return :
     forall o m i c om pi s rho cs sigma omg
-      (H:m.(body) i = Some Return),
+      (H:body m i = Some Return),
       step2 o ((CP m i c om pi,s,rho)::cs,sigma,omg) (cs,sigma,omg) None
   | step2_areturn : forall o m i c om pi v s rho s' rho' cs sigma omg p
-    (H:m.(body) i = Some AReturn),
+    (H:body m i = Some AReturn),
     step2 o ((CP m i c om pi,v::s,rho)::(p,s',rho')::cs,sigma,omg) 
     ((p,v::s',rho')::cs,sigma,omg) None.
   
@@ -650,7 +650,7 @@ Section step.
     step3 L (o,cs,sigma,mu,omg) (upd_thread L o cs',sigma',mu,omg') e
   | step3_start : forall m i s a0 m0 i0 c0 om0 pi0 s' m1
     c1 om1 rho1 pi' L sigma lock omg c om pi rho cs o pi1 o' cId
-    (H0 : m.(body) i = Some Run)
+    (H0 : body m i = Some Run)
     (H1 : s=(Loc o')::s')
     (HO : o'=(a0,CP m0 i0 c0 om0 pi0))
     (C0 : body m0 i0 = Some (New cId))
@@ -668,7 +668,7 @@ Section step.
             None
   | step3_enter :
     forall L m i mu mu' (o:memory_location') (o':memory_location) c om pi pi' s rho cs sigma omg
-      (H0 : m.(body) i = Some MonitorEnter)
+      (H0 : body m i = Some MonitorEnter)
       (H2 : acquire (fst o) (fst o') mu mu')
       (H3 : pi'=incr_lVect pi m c (i,S i)),
       step3 L (o,(CP m i c om pi, (Loc o')::s,rho)::cs,sigma,mu,omg)
@@ -676,7 +676,7 @@ Section step.
            None
   | step3_exit :
     forall L m i mu mu' o o' c om pi pi' s rho cs sigma omg
-      (H0 : m.(body) i = Some MonitorExit)
+      (H0 : body m i = Some MonitorExit)
       (H2 : release (fst o) (fst o') mu mu')
       (H3 : pi'=incr_lVect pi m c (i,S i)),
       step3 L (o,(CP m i c om pi, (Loc o')::s,rho)::cs,sigma,mu,omg)

@@ -1,5 +1,4 @@
-Require Import Coq.Lists.List Lia.
-Require Import Min.
+From Stdlib Require Import Lists.List Lia.
 Require Import sections.lifo.BoolFunctions.
 Require Import sections.lifo.Misc.
 Require Import sections.lifo.Length.
@@ -124,38 +123,31 @@ Section map_inversion.
     ( forall n  (H1 : n < length l) (H1' : n < length l') , f (nth' n l H1) = g (nth' n l' H1')) -> 
     map f l = map g l'.
   Proof.
-    intros.
-    pose (n:=length l); assert (H' :  n = length l) by reflexivity; revert H' ; generalize n; clear n; intros. revert dependent l; revert l' .      
-    induction n.
-    intros l' l H H0 H'.    symmetry in H'.
-    rewrite H' in *.
-    rewrite (lengthNil  _ H').
-    symmetry in H.
-    rewrite (lengthNil  _ H).
-    reflexivity.
-    intros l' l H H0 H'.    
-    admit.
-    Admitted.
-     (* lengthPos H'.
-    simpl in H.
-    lengthPos H.
-    simpl.
-    f_equal. 
-    assert (len_ok : 0  < length (a :: l'0)) by (simpl ; auto with arith).
-    assert (len_ok' : 0  < length (a0 :: l'1)) by (simpl ; auto with arith).
-    generalize (H0 0 len_ok len_ok'). unfold nth'. simpl. auto.
-    apply IHn.
-    simpl in H; auto with arith.
-    intros n0 H1 H1'.
-    assert (Sn0_ok: (S n0) <  length (a :: l'0)) by (simpl; lia).
-    assert (Sn0_ok' : (S n0) <  length (a0 :: l'1)) by (simpl; lia).
-    generalize (H0 (S n0) Sn0_ok Sn0_ok').
-    unfold nth' at 1. unfold nth' at 1.  simpl.
-    rewrite (nth'_nth _  _ a).
-    rewrite (nth'_nth _  _ a0).
-    auto.
-    simpl in H'; auto with arith.
-  Qed. *)
+    induction l as [|a l IH]; intros l' f g Hlen Hnth.
+    - destruct l'; [reflexivity|discriminate].
+    - destruct l' as [|a' l']; [discriminate|].
+      simpl in Hlen.
+      simpl.
+      f_equal.
+      + assert (Ha : 0 < length (a :: l)) by (simpl; lia).
+        assert (Ha' : 0 < length (a' :: l')) by (simpl; lia).
+        specialize (Hnth 0 Ha Ha').
+        rewrite (nth'_nth _ _ a) in Hnth.
+        rewrite (nth'_nth _ _ a') in Hnth.
+        exact Hnth.
+      + apply IH.
+        * lia.
+        * intros n Hn Hn'.
+          assert (HSn : S n < length (a :: l)) by (simpl; lia).
+          assert (HSn' : S n < length (a' :: l')) by (simpl; lia).
+          specialize (Hnth (S n) HSn HSn').
+          rewrite (nth'_nth _ _ a) in Hnth.
+          rewrite (nth'_nth _ _ a') in Hnth.
+          simpl in Hnth.
+          rewrite (nth'_nth _ Hn a).
+          rewrite (nth'_nth _ Hn' a').
+          exact Hnth.
+  Qed.
 
   Lemma fold_left_map_app: 
     forall (f:A->B) (l:list (list A)) (i: list A),

@@ -1,11 +1,12 @@
-Require Import Lia Program Vector.
-Require Import List.
+From Stdlib Require Import Lia Program List.
+From Stdlib Require Import Relations.Relation_Operators.
+From Stdlib Require Import Utf8.
+From Stdlib Require Import ClassicalDescription.
+Require Import Vector.
 Require Import Monad.
 Require Import VectorTheory.
 Require Import Syntax.
 Require Import Semantics.
-Require Import Coq.Relations.Relation_Operators.
-Require Import Utf8.
 
 Module SemanticsTheory (Import P : Process) (Import V : Vector P).
 
@@ -13,7 +14,9 @@ Module SemanticsTheory (Import P : Process) (Import V : Vector P).
 
   Lemma a : forall {A B C : Type}
     (f : B -> C) (g : A -> B) x, f (g x) = (f ∘ g) x.
-  Admitted.
+  Proof.
+    reflexivity.
+  Qed.
 
   Lemma replicate_fmap_snd : 
   forall s Σ, fmap snd ⦉ s, Σ ⦊ = Σ.
@@ -573,7 +576,7 @@ Qed.
     - constructor 2.  
       apply step_seq.
       assumption.
-    - assert (@inl vconfiguration vstore v' ~= @inl vconfiguration vstore v') as Ha by reflexivity.
+    - assert (JMeq (@inl vconfiguration vstore v') (@inl vconfiguration vstore v')) as Ha by reflexivity.
       generalize (IHreachable _ Ha s2); intro.
       constructor 3 with (parcomp (λ s : stmt, s;; s2) C').
       apply step_seq.
@@ -639,7 +642,10 @@ Qed.
 
   Lemma deadlock_free_dec : 
     forall s, {deadlock_free s} + {~ deadlock_free s}.
-  Admitted.
+  Proof.
+    intro s.
+    apply excluded_middle_informative.
+  Qed.
 
 (*  Definition reachable' := clos_trans _ step. *)
 

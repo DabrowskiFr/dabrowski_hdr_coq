@@ -1,4 +1,4 @@
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.Prelude.
 Require Import sections.common.GenericTrace.
 Require Import sections.traces.Trace.
@@ -7,9 +7,9 @@ Module Make (SN : MiniDecidableSet )
             (Export Ad : DecidableInfiniteSet) 
             (Export Ty : Type_.TYPE Ad)
             (Export Va : Value.TYPE Ad Ty)
-            (Import Tr : Trace.T SN Ad Ty Va).
+            (Import TraceMod : Trace.T SN Ad Ty Va).
 
-  Hint Constructors singleAction.
+  Hint Constructors singleAction : core.
 
   Lemma eq_action_dec : 
     forall (a a' : action), {a = a'} + {a <> a'}.
@@ -36,6 +36,6 @@ Module Type Proj
        (Export Ad : DecidableInfiniteSet) 
        (Export Ty : Type_.TYPE Ad)
        (Export Va : Value.TYPE Ad Ty)
-       (Import Tr : Trace.T SN Ad Ty Va).
-  Include Make SN Ad Ty Va Tr.
+       (Import TraceMod : Trace.T SN Ad Ty Va).
+  Include Make SN Ad Ty Va TraceMod.
 End Proj.

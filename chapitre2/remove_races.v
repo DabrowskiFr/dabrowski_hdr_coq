@@ -48,7 +48,7 @@ Proof.
   intros.
   inv H; constructor; auto.
 Qed.
-Hint Resolve conflicting_actions_equiv.
+Hint Resolve conflicting_actions_equiv : core.
 
 Lemma conflicting_actions_equiv' : forall a1 a2,
   conflicting_actions a1 a2 ->
@@ -399,6 +399,5 @@ Proof.
 Qed.
 
 End RemoveRace.
-
 
 

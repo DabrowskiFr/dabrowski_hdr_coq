@@ -13,7 +13,7 @@ unfold frame_coherency.
 simpl.
 intros.
 generalize (incr_mVect_prop omg m0 c0 m c).
-omega.
+lia.
 Qed.
 
 Lemma global_coherency_incr_mVect : forall l omg,
@@ -24,7 +24,7 @@ destruct l as [a [m' i' c' om' pi']].
 unfold global_coherency.
 intros.
 generalize (incr_mVect_prop omg m c m' c').
-omega.
+lia.
 Qed.
 
 Lemma fc_step  : 
@@ -58,7 +58,7 @@ unfold frame_coherency.
 simpl.
 unfold invoke_mVect, incr_mVect, conv_mVect.
 repeat rewrite MVect.get_upd1.
-omega.
+lia.
 
 destruct H0.
 subst.
@@ -75,7 +75,7 @@ intro.
 unfold frame_coherency in H1.
 simpl in H1.
 unfold invoke_mVect, incr_mVect, conv_mVect in *.
-omega.
+lia.
 
 destruct fr as [[[m2 i2 c2 om2 pi2]?]?].
 generalize (incr_mVect_prop omg m1 (C.make_call_context m i c (C.make_new_context m0 i0 cId c0)) m2 c2).
@@ -83,7 +83,7 @@ generalize (H l _ _ H13 (in_cons _ _ _ H0)).
 intros.
 unfold frame_coherency in *.
 simpl in *.
-omega.
+lia.
 
 eapply H; eauto using in_cons.
 destruct H2.
@@ -95,14 +95,14 @@ eapply H; eauto using in_cons.
 unfold upd_thread in H1.
 simpl in *; Case'.
 inj H1.
-destruct H2; [idtac | tauto].
+destruct H2 as [H2 | H2]; [|contradiction].
 subst.
 unfold frame_coherency.
 simpl.
 rewrite (incr_mVect_eq omg m1  (C.make_call_context m i c (C.make_new_context m0 i0 cId c0))).
 unfold invoke_mVect, conv_mVect in *.
 rewrite MVect.get_upd1 in *.
-omega.
+lia.
 
 destruct (S.eq_memloc' l l).
 inj H1.
@@ -117,7 +117,7 @@ generalize (H l _ _ H13 (in_eq _ _)).
 intro.
 unfold frame_coherency in *.
 simpl in *.
-omega.
+lia.
 
 destruct fr as [[[m2 i2 c2 om2 pi2]?]?].
 generalize (incr_mVect_prop omg m1 (C.make_call_context m i c (C.make_new_context m0 i0 cId c0)) m2 c2).
@@ -125,7 +125,7 @@ generalize (H l _ _ H13 (in_cons _ _ _ H0)).
 intros.
 unfold frame_coherency in *.
 simpl in *.
-omega.
+lia.
 
 rewrite H1 in H13.
 inj H13.
@@ -135,32 +135,34 @@ generalize (incr_mVect_prop omg m1 (C.make_call_context m i c (C.make_new_contex
 intros.
 unfold frame_coherency in *.
 simpl in *.
-omega.
+lia.
 
 unfold upd_thread in H1.
 destruct (S.eq_memloc' l l).
 inj H1.
-destruct H2.
+destruct H2 as [H2 | H2].
 subst.
-assert (frame_coherency (CP m i c om pi,Loc o'::s,rho) omg') by (eapply H; eauto using in_eq).
-auto.
-eapply H; eauto using in_cons.
-eapply H; eauto.
+exact (H l ((CP m i c om pi,Loc o'::s,rho)::cs0)
+         (CP m i c om pi,Loc o'::s,rho) H13
+         (@in_eq frame (CP m i c om pi,Loc o'::s,rho) cs0)).
+eapply H; [exact H13 | right; exact H2].
+contradiction n; reflexivity.
 
 unfold upd_thread in H1.
 destruct (S.eq_memloc' l l).
 inj H1.
-destruct H2.
+destruct H2 as [H2 | H2].
 subst.
-assert (frame_coherency (CP m i c om pi,Loc o'::s,rho) omg') by (eapply H; eauto using in_eq).
-auto.
-eapply H; eauto using in_cons.
-eapply H; eauto.
+exact (H l ((CP m i c om pi,Loc o'::s,rho)::cs0)
+         (CP m i c om pi,Loc o'::s,rho) H13
+         (@in_eq frame (CP m i c om pi,Loc o'::s,rho) cs0)).
+eapply H; [exact H13 | right; exact H2].
+contradiction n; reflexivity.
 
 inv H12.
-rewrite (upd_thread_old L o cs' l) in H1.
+rewrite (upd_thread_old L o cs' l) in H1 by assumption.
 inv H15.
-eapply H; eauto.
+eapply H; [exact H1 | exact H2].
 eapply frame_coherency_incr_mVect; eauto.
 eapply H. 
 apply H1.
@@ -169,19 +171,18 @@ assumption.
 eapply H.
 apply H1.
 assumption.
-assumption.
 
 unfold upd_thread in H1.
 simpl in *; Case'.
 inj H1.
-destruct H2; [idtac | tauto].
+destruct H2 as [H2 | H2]; [|contradiction].
 subst.
 unfold frame_coherency.
 simpl.
 rewrite (incr_mVect_eq omg m1 (C.make_call_context m i c (C.make_new_context m0 i0 cId c0))).
 unfold invoke_mVect, conv_mVect.
 rewrite MVect.get_upd1.
-omega.
+lia.
 MLtac' o l.
 intuition.
 
@@ -190,12 +191,12 @@ eapply frame_coherency_incr_mVect; eauto.
 unfold upd_thread in H1.
 MLtac' o l.
 intuition.
-eapply H; eauto.
+eapply H; [exact H1 | exact H2].
 
 unfold upd_thread in H1.
 MLtac' o l.
 intuition.
-eapply H; eauto.
+eapply H; [exact H1 | exact H2].
 Qed.
 
 
@@ -243,11 +244,11 @@ inv H.
 unfold threads_init in H0.
 Case'.
 inj H0.
-destruct H1; [idtac | tauto].
+destruct H1 as [H1 | H1]; [|contradiction].
 subst.
 unfold frame_coherency.
 simpl.
-omega.
+lia.
 discriminate H0.
 
 intros.
@@ -281,7 +282,7 @@ unfold om_run_address.
 unfold om_init.
 unfold conv_mVect.
 rewrite MVect.get_init.
-compute; omega.
+compute; lia.
 
 elim H0; reflexivity.
 
@@ -402,16 +403,15 @@ assert ((CP m i c om pi) = (CP p.(main) 0 C.init_mcontext (om_init p) LVect.init
 unfold threads_init in H0.
 Case'.
 inj H0.
-destruct H1; [idtac | tauto].
-unfold cp_run_address in H.
+destruct H1 as [H1 | H1]; [|contradiction].
 symmetry.
-inversion H.
+inversion H1.
 reflexivity.
 discriminate H0.
 rewrite H.
 unfold cp_run_address.
 unfold local_coherency.
-omega.
+lia.
 
 
 intros.
@@ -451,7 +451,8 @@ unfold cp_init.
 simpl.
 apply main_prop_1.
 intuition.
-discriminate.
+contradiction.
+discriminate H0.
 
 intros.
 inv H'.
@@ -585,6 +586,7 @@ destruct H18 as [cl [? [? [? ?]]]].
 exists cl.
 auto.
 intuition.
+contradiction.
 
 destruct (S.eq_memloc' o l); [intuition|idtac].
 generalize (IH _ _ _ _ _ H1 H2).
@@ -635,10 +637,9 @@ assert ((CP m i c om pi) = (CP p.(main) 0 C.init_mcontext (om_init p) LVect.init
 unfold threads_init in H1.
 Case'.
 inj H1.
-destruct H2; [idtac | tauto].
-unfold cp_init in H0.
+destruct H2 as [H2 | H2]; [|contradiction].
 symmetry.
-inversion H0.
+inversion H2.
 reflexivity.
 discriminate H1.
 

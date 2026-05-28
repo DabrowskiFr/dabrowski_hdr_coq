@@ -1,4 +1,4 @@
-Require Import List ZArith String Bool.
+From Stdlib Require Import List ZArith String Bool.
 Require Import sections.lifo.Prelude Error Value.
 
 Import ListNotations.
@@ -113,23 +113,23 @@ Module Type Simple
                    | Z0 => Error "Mod: division by 0"
                    (*| S n => Ok (proj1_sig (modulo (S n) (gt_Sn_O n) n1))*)
                    (*| _ => (Ok Coq.ZArith.BinIntDef.Z.modulo n1 n2)*)
-                   | _ => Ok (Coq.ZArith.BinIntDef.Z.modulo n1 n2)
+                   | _ => Ok (Z.modulo n1 n2)
                  end
       | Div => fun n1 n2 => 
                  match n2 with 
                    | Z0 => Error "Div: division by 0"
                    (*| S n => Ok (proj1_sig (quotient (S n) (gt_Sn_O n) n1))*)
-                   | _ => Ok (Coq.ZArith.BinIntDef.Z.modulo n1 n2)
+                   | _ => Ok (Z.modulo n1 n2)
                  end
       | Or => orb
       | And => andb
       | Not => negb
       | Equal Thread => Nat.eqb
-      | Equal Number => fun x y => proj1_sig (Z_eq_bool x y)
+      | Equal Number => Z.eqb
       | Equal Boolean => eqb
       | Equal _Allocation => fun x y => if Ad.eq_dec x y then true else false
-      | LowerThan => Zlt_bool
-      | GreaterThan => Zgt_bool
+      | LowerThan => Z.ltb
+      | GreaterThan => Z.gtb
   end.
 
   Close Scope string_scope.

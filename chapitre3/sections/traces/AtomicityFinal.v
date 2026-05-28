@@ -1,4 +1,4 @@
-Require Import Lt List Lia. 
+From Stdlib Require Import Arith List Lia.
 From sections.lifo Require Import Prelude ListBasics Length.
 From sections.common Require Import Insertion.
 From sections.traces Require Import Trace_Basics_tribe Synchronisation.

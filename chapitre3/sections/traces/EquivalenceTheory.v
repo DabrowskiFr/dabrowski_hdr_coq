@@ -1,4 +1,4 @@
-Require Import Lt Peano_dec Compare_dec Relation_Operators List Morphisms Lia.
+From Stdlib Require Import Arith Peano_dec Compare_dec Relations.Relation_Operators List Morphisms Lia.
 From sections.lifo Require Import Prelude ListBasics Length BijRel.
 From sections.common Require Import GenericTrace.
 From sections.traces Require Import Synchronisation Equivalence.
@@ -184,7 +184,7 @@ Qed.
       assumption.
       assert (action_of (pi j s) == Close p) by eauto.
       left.
-      exists j'; intuition.
+      exists j'; intuition auto with *.
     - destruct (compatible_range_opened s s' R  h_occ h_op_cl h_comp p i h_range HNotClosed) 
         as [i' [hi' [h_range' h_occursIn']]].
       exists i'.
@@ -229,7 +229,7 @@ Qed.
               assert (i = i0) by wellFormed_occurences (Open p).
               congruence.
             }
-            constructor 1; constructor 1 with t0; intuition.
+            constructor 1; constructor 1 with t0; intuition auto with *.
           }
           inversion h_comp as [ _ [Hu Hv ]].
           now apply (Hv _ _ _ _ h_i' h1_k').
@@ -262,7 +262,7 @@ Qed.
               assert (action_of (pi j s) == Close p) by congruence. 
               assert (j <> k) by (intro; subst; congruence).
               assert (k < j) by auto with *.
-              constructor; constructor 1 with t0; intuition.
+              constructor; constructor 1 with t0; intuition auto with *.
             }
             inversion h_comp as [ _ [Hu Hv ]].
             now apply (Hv _ _ _ _ h1_k' h_j').
@@ -270,7 +270,7 @@ Qed.
           assert (k' < j') by now apply synchronizeWithOrder with s'.
           auto with *.
         }
-        assert (i' < k' <= j') by intuition.
+        assert (i' < k' <= j') by intuition auto with *.
         assert (compatible s s') by (exists R; assumption). 
         constructor 1 with i' j' t0 k'; first [now apply compatible_owns with s | congruence].
       + assert (k' <= length s' - 1).
@@ -280,7 +280,7 @@ Qed.
           destruct (h_restricted k k' h1_k'); assumption.
           auto with *.
         }
-        assert (i' < k' <= length s' -1) by intuition.
+        assert (i' < k' <= length s' -1) by intuition auto with *.
         constructor 1 with i' (length s' - 1) t0 k'.
         tauto.
         assert (compatible s s') by (exists R; assumption). 
@@ -595,7 +595,7 @@ Qed.
             as [t Ht]. 
           {
             rewrite h2_i.
-            destruct (pi i' s') as [[t1 a1] | _].
+            destruct (pi i' s') as [[t1 a1] |] eqn:h_pi_i'.
             - exists t1;auto.
             - inversion h_close.
           }
@@ -721,7 +721,7 @@ Qed.
       }
       assert (length s - 1 < k) by eauto.
       assert (k < length s) by eauto with nth_error.
-      exfalso; intuition.
+      exfalso; intuition auto with *.
   Qed.
 
    
@@ -942,9 +942,9 @@ Qed.
          {
            rewrite <- Hv in H1.
            assert (j' < length s') by eauto with nth_error.
-           intuition.
+           intuition auto with *.
          }
-         intuition.
+         intuition auto with *.
          congruence.
          congruence.
       + inversion H; subst.
@@ -1142,17 +1142,17 @@ Qed.
       assert (i' <= k') as h_lt1.
       {
         destruct (Peano_dec.eq_nat_dec i k).
-        - subst; assert (i' = k') by (destruct HR; injection_); intuition.
+        - subst; assert (i' = k') by (destruct HR; injection_); intuition auto with *.
         - case_eq (pi k s'); 
           [intros [t a] h_eq | intros h_neq;rewrite h_neq in H2; discriminate]; subst.
           assert (synchronizeWith s' i k).
           {
             constructor 1; constructor 1 with t; unfold Event.t in *;
-            [intuition | rewrite H3; rewrite h_eq; reflexivity | rewrite h_eq; reflexivity].
+            [intuition auto with * | rewrite H3; rewrite h_eq; reflexivity | rewrite h_eq; reflexivity].
           }
           assert (synchronizeWith s i' k') by compatibility.
           assert (i' < k') by now apply synchronizeWithOrder with s.
-          intuition.
+          intuition auto with *.
       }
       assert (compatible_by (inverse R) s' s) as h_comp_inv by now apply symmetric_compatible_R.
       destruct compatible_range with s' s (inverse R) p i j as [i2 [Hx Hy]]; try assumption.   
@@ -1172,7 +1172,7 @@ Qed.
         {
           destruct (Peano_dec.eq_nat_dec k j); intros; subst.
           - assert (k' = j') by (subst; destruct HR; injection_). 
-            intuition.
+            intuition auto with *.
           - assert (k' < j').
             {
               assert (synchronizeWith s' k j).
@@ -1180,7 +1180,7 @@ Qed.
                 case_eq (pi k s'); 
                 [intros [t a] h_eq | intros h_neq;rewrite h_neq in H2; discriminate]; subst.
                 constructor; constructor 1 with t.
-                - intuition.
+                - intuition auto with *.
                 - unfold Event.t in *; rewrite h_eq; reflexivity.
                 - assert (action_of (pi i' s) == Open p) by now inversion h_range'.
                   assert (threadId_of (pi j' s) = threadId_of (pi i' s)) by wf_intuition.
@@ -1190,15 +1190,15 @@ Qed.
               assert (synchronizeWith s k' j') by compatibility.
               now apply synchronizeWithOrder with s.
             }
-            intuition.
+            intuition auto with *.
         }
         apply sec_order_cons_dir with i' j' k'; 
-          [assumption | intuition | congruence | congruence].
+          [assumption | intuition auto with * | congruence | congruence].
       * assert (k' <= length s - 1) 
           as h_lt2
-            by (assert (k' < length s) by (rewrite <- Hv in H2; eauto with nth_error); intuition).
+            by (assert (k' < length s) by (rewrite <- Hv in H2; eauto with nth_error); intuition auto with *).
         apply sec_order_cons_dir with i' (length s - 1) k'; 
-          [assumption | intuition | congruence | congruence].
+          [assumption | intuition auto with * | congruence | congruence].
     - assert (i < length s') by eauto with nth_error.
       assert (i' < length s') by eauto with nth_error.
       assert (exists j, R j i /\ pi j s = pi i s') as [j [Hu Hv]] by compatibility.
@@ -1358,9 +1358,9 @@ Qed.
     inversion h_comp as [R [[_ _ h_applicative _ h_surjective] [h_eq h_sync ]]].
     unfold wf_openInSection in *.
     intros p i j p' k h_range h_open_p' h_int.
-    assert (j < length s') as h_lt_j by (inversion h_range; subst; [eauto with nth_error | intuition]).
-    assert (i < length s') as h_lt_i by intuition.
-    assert (k < length s') as h_lt_k by intuition.
+    assert (j < length s') as h_lt_j by (inversion h_range; subst; [eauto with nth_error | intuition auto with *]).
+    assert (i < length s') as h_lt_i by intuition auto with *.
+    assert (k < length s') as h_lt_k by intuition auto with *.
 
 
     assert (exists i', R i' i /\ pi i' s = pi i s') as [i' [h_i' h_eq_i']]. 
@@ -1388,7 +1388,7 @@ Qed.
         intro; subst.
         assert (wf_occurences s') by now apply compatible_wf_occurences with s.
         assert (k = i) by wellFormed_occurences (Open p').
-        subst; exfalso; intuition.
+        subst; exfalso; intuition auto with *.
       }
       destruct aux2' with s' i k p p'.    
       now apply compatible_wf_occurences with s.
@@ -1402,7 +1402,7 @@ Qed.
       assert (k < i).
       apply synchronizeWithOrder with s'.
       assumption.
-      exfalso; intuition.
+      exfalso; intuition auto with *.
     }
     inversion h_range; subst.
     - destruct (Compare_dec.lt_eq_lt_dec k' j') as [ [] | ].
@@ -1416,7 +1416,7 @@ Qed.
             }
             apply synchronizeWithOrder with s.
             assumption.
-          - intuition.
+          - intuition auto with *.
         }
         apply h_wf_openInSection with i' j' k'.
         assumption.
@@ -1440,7 +1440,7 @@ Qed.
                   by now apply compatible_wf_occurences with s.
               wellFormed_occurences (Open p').
             }
-            subst; exfalso; intuition.
+            subst; exfalso; intuition auto with *.
           - destruct (P.lt_dec p p');[ assumption|].
             destruct (P.lt_dec p' p).
             + unfold wf_prefixOrder in *.
@@ -1448,7 +1448,7 @@ Qed.
                   now apply compatible_wf_prefixOrder with s.
               destruct (HWFPO _ _ _ _ h_open_p' Hi).
               assumption.
-              exfalso; intuition.
+              exfalso; intuition auto with *.
             + assert (p # p') by tauto.
               assert (wf_mutualExclusion s') as HWFMUT by
                   now apply compatible_wf_mutualExclusion with s.
@@ -1462,7 +1462,7 @@ Qed.
                 assert (i0 = j) by wellFormed_occurences (Close p).
                 assert (j0 = k) by wellFormed_occurences (Open p').
                 subst.
-                exfalso; intuition.
+                exfalso; intuition auto with *.
               * unfold precedes in H3.
                 inversion H3; subst.
                 assert (wf_occurences s').
@@ -1473,7 +1473,7 @@ Qed.
                 destruct (HWFOP _ _ Ha) as [u0 [Hc [Hd He]]].
                 assert (u0 = k) by wellFormed_occurences (Open p').
                 subst.
-                exfalso; intuition.
+                exfalso; intuition auto with *.
         }
     - assert (range s p i' (length s -1)). 
       {
@@ -1497,7 +1497,7 @@ Qed.
           rewrite <- h_eq_k' in h_open_p'.
           eauto with nth_error.
         }
-        intuition.
+        intuition auto with *.
       }
       apply h_wf_openInSection with i' (length s - 1) k'; try assumption.
       congruence.
@@ -1517,9 +1517,9 @@ Qed.
     inversion h_wf as [ _ _ _ h_wf_open_close h_wseq _ _ _].
     inversion h_comp as [R h_compatible].
 
-    assert (j < length s') as h_lt_j by (inversion h_range; subst; [eauto with nth_error | intuition]).
-    assert (k < length s') as h_lt_k by intuition.
-    assert (i < length s') as h_lt_i by intuition.
+    assert (j < length s') as h_lt_j by (inversion h_range; subst; [eauto with nth_error | intuition auto with *]).
+    assert (k < length s') as h_lt_k by intuition auto with *.
+    assert (i < length s') as h_lt_i by intuition auto with *.
 
     assert (exists i', R i' i /\ pi i' s = pi i s') as [i' [h_i' h_eq_i']]. 
     {
@@ -1565,13 +1565,13 @@ Qed.
       {
         constructor 1.
         constructor 1 with t; unfold Event.t in *; 
-        [intuition | congruence | congruence].
+        [intuition auto with * | congruence | congruence].
       }
       assert (synchronizeWith s' k j). 
       {
         constructor 1.
         constructor 1 with t; unfold Event.t in *; 
-        [intuition | congruence | congruence].
+        [intuition auto with * | congruence | congruence].
       }
       inversion h_compatible as [ _ [ _ Hb]].
       assert (synchronizeWith s i' k') by now apply (Hb i' i k' k).
@@ -1602,13 +1602,13 @@ Qed.
       {
         constructor 1. 
         constructor 1 with t; unfold Event.t in *;
-        [intuition | congruence | congruence].
+        [intuition auto with * | congruence | congruence].
       }
       assert (synchronizeWith s l' j'). 
       {
         constructor 1. 
         constructor 1 with t; unfold Event.t in *; 
-        [intuition | congruence | congruence].
+        [intuition auto with * | congruence | congruence].
       }
       inversion h_compatible as [ _ [ _ Hb]].
       assert (synchronizeWith s' k l) by now apply (Hb k' k l' l).
@@ -1847,13 +1847,13 @@ Proof.
   {
     destruct (Peano_dec.eq_nat_dec i k).
     - assert (i' = k') by (subst; destruct HR; functionnal_).
-      intuition.
+      intuition auto with *.
     - assert (i' < k').
       {
         assert (synchronizeWith s i k).
         {
           constructor 1; constructor 1 with t; unfold Event.t in *;
-          [intuition | rewrite h_eq; reflexivity | congruence].
+          [intuition auto with * | rewrite h_eq; reflexivity | congruence].
         }
         assert (synchronizeWith s' i' k')  by compatibility.
         now apply synchronizeWithOrder with s'.
@@ -1868,13 +1868,13 @@ Proof.
       assert (pi j s = pi j' s') by (destruct HR as [ _ [ ? _ ]]; auto).
       destruct (Peano_dec.eq_nat_dec k j).
       - assert (k' = j') by now (subst; destruct HR; functionnal_).
-        intuition.
+        intuition auto with *.
       - assert (k' < j').
         {
           assert (synchronizeWith s k j).
           {
             constructor 1; constructor 1 with t; unfold Event.t in *.
-            - intuition.
+            - intuition auto with *.
             - congruence.
             - assert (action_of (pi i s) == Open p) by now inversion h_range.
               assert (action_of (pi j s) == Close p) by congruence.
@@ -1884,7 +1884,7 @@ Proof.
           assert (synchronizeWith s' k' j') by compatibility.
           now apply synchronizeWithOrder with s'.
         }
-        intuition.
+        intuition auto with *.
     }
     exists i', k', j'; repeat first [congruence | constructor].
   - assert (i2 = i') by (destruct HR; functionnal_); subst.
@@ -1892,7 +1892,7 @@ Proof.
     assert (k' <= length s' - 1).
     {
       assert (k' < length s') by (destruct HR as [ [h_r] ]; apply (h_r _ _ Hu)).
-      intuition.
+      intuition auto with *.
     }
     exists i', k', (length s' - 1); repeat first [congruence | constructor 2 | constructor ].
 Qed.
@@ -1954,7 +1954,7 @@ Qed.
       {
         assert (i < length (s1 • e)) by eauto with nth_error.
         autorewrite with length in H; simpl in H.
-        intuition.
+        intuition auto with *.
       }
       subst.
       autorewrite with nth_error in Hi.
@@ -1988,7 +1988,7 @@ Proof.
       assert (i < length s1).
       {
         assert (i < length (s1 • e)) as Hb by eauto with nth_error.
-        autorewrite with length in Hb; simpl in Hb; intuition.
+        autorewrite with length in Hb; simpl in Hb; intuition auto with *.
       }
       assert (exists i', R i i' /\ pi i s1 = pi i' s2) 
         as [i' [Ha Hb]] by compatibility2.
@@ -2028,7 +2028,7 @@ Proof.
       assert (i < length s1).
       {
         assert (i < length (s1 • e)) as Hb by eauto with nth_error.
-        autorewrite with length in Hb; simpl in Hb; intuition.
+        autorewrite with length in Hb; simpl in Hb; intuition auto with *.
       }
       assert (exists i', R i i' /\ pi i s1 = pi i' s2) 
         as [i' [Ha Hb]] by compatibility2.
@@ -2070,10 +2070,10 @@ Proof.
       replace (S (length s1)) with (length (s1 • e)).
       inversion h_range; subst.
       eauto with nth_error.
-      autorewrite with length; simpl; intuition.
-      autorewrite with length; simpl; intuition.
+      autorewrite with length; simpl; intuition auto with *.
+      autorewrite with length; simpl; intuition auto with *.
     }
-    intuition.
+    intuition auto with *.
   }
   assert (action_of (pi i s1) == Open p) as Hu. 
   {
@@ -2110,9 +2110,9 @@ Proof.
                                  discriminate ].
       replace (S (length s1)) with (length (s1 • e)).
       eauto with nth_error.
-      autorewrite with length; simpl; intuition.
-      intuition.
-      autorewrite with length; simpl; intuition.
+      autorewrite with length; simpl; intuition auto with *.
+      intuition auto with *.
+      autorewrite with length; simpl; intuition auto with *.
     }
     subst.
     (exists i', (length s2), (length s2)).
@@ -2130,7 +2130,7 @@ Proof.
       symmetry.
       eauto with nth_error.
       autorewrite with length; simpl.
-      replace (length s2 + 1 - 1) with (length s2) by intuition.
+      replace (length s2 + 1 - 1) with (length s2) by intuition auto with *.
       autorewrite with nth_error.
       assumption.
     + replace (length s2) with (length (s2 • e) - 1).
@@ -2145,14 +2145,14 @@ Proof.
       symmetry.
       exists R; eauto.
       assumption.
-      autorewrite with length; simpl; intuition.
+      autorewrite with length; simpl; intuition auto with *.
     + split.
       inversion h_comp.
       inversion H; subst.
       destruct H1 with i i'.
       assumption.
       assumption.
-      intuition.
+      intuition auto with *.
   - assert (k < length s1) as Hd. 
     {
       assert (j < S (length s1)).
@@ -2160,10 +2160,10 @@ Proof.
         replace (S (length s1)) with (length (s1 • e)).
         inversion h_range; subst.
         eauto with nth_error.
-        autorewrite with length; simpl; intuition.
-        autorewrite with length; simpl; intuition.
+        autorewrite with length; simpl; intuition auto with *.
+        autorewrite with length; simpl; intuition auto with *.
       }
-      intuition.
+      intuition auto with *.
     }
     assert (exists k', R k k' /\ pi k s1 = pi k' s2) 
       as [k' [He Hf]] by compatibility2.
@@ -2203,7 +2203,7 @@ Proof.
         apply occursIn_s1e_s2e with s2.
         symmetry; exists R; eauto.
         assumption.
-        autorewrite with length; simpl; intuition.
+        autorewrite with length; simpl; intuition auto with *.
       * split.
         assert (synchronizeWith s1 i k).
         {
@@ -2234,16 +2234,16 @@ Proof.
           inversion H.
           eapply H1; eauto.
         }
-        intuition.
+        intuition auto with *.
     + assert (j < length s1). 
       {
         assert (j < S (length s1)).
         replace (S (length s1)) with (length (s1 • e)).
         inversion h_range; subst.
         eauto with nth_error.
-        autorewrite with length; simpl; intuition.
-        autorewrite with length; simpl; intuition.
-        intuition.
+        autorewrite with length; simpl; intuition auto with *.
+        autorewrite with length; simpl; intuition auto with *.
+        intuition auto with *.
       }
       assert (range s1 p i j). 
       {
@@ -2278,7 +2278,7 @@ Proof.
         lia.
       }
       symmetry; eauto with nth_error.
-      assert (i < length s1) by intuition.
+      assert (i < length s1) by intuition auto with *.
       symmetry; eauto with nth_error.
       split.
       replace (pi k (s1 • e)) with (pi k s1).
@@ -2294,7 +2294,7 @@ Proof.
       symmetry; eauto with nth_error.
       split.
       apply H3.
-      intuition.
+      intuition auto with *.
       exists x, k0,(length s2 - 1).
       split.
       replace (pi i (s1 • e)) with (pi i s1).
@@ -2306,7 +2306,7 @@ Proof.
         lia.
       }
       symmetry; eauto with nth_error.
-      assert (i < length s1) by intuition.
+      assert (i < length s1) by intuition auto with *.
       symmetry; eauto with nth_error.
       split.
       replace (pi k (s1 • e)) with (pi k s1).
@@ -2335,10 +2335,10 @@ Proof.
         assert (j0 < length s2) by eauto with nth_error.
         lia.
         destruct H4; subst.
-        intuition.
+        intuition auto with *.
       }
       symmetry; eauto with nth_error.
-      assert (i < length s1) by intuition.
+      assert (i < length s1) by intuition auto with *.
       symmetry; eauto with nth_error.
       split.
       replace (pi k (s1 • e)) with (pi k s1).
@@ -2350,7 +2350,7 @@ Proof.
         assert (j0 < length s2) by eauto with nth_error.
         lia.
         destruct H4; subst.
-        intuition.
+        intuition auto with *.
       }
       symmetry; eauto with nth_error.
       assert (k < length s1).
@@ -2363,7 +2363,7 @@ Proof.
       split.
       assumption.
       split. 
-      intuition.
+      intuition auto with *.
       destruct h2.
       assert (j0 < length s2) by eauto with nth_error.
       auto with *.
@@ -2400,7 +2400,7 @@ Proof.
     constructor 1 with i' j' t0 k'.
     assumption.
     now apply owns_s1e_s2e with s1 R.
-    intuition.
+    intuition auto with *.
     rewrite <- Hb.
     assumption.
     rewrite <- Hb.
@@ -2448,8 +2448,8 @@ Qed.
             inversion H; subst.
             - assert (j < length (s1 • (t, Open p'))) by eauto with nth_error.
               autorewrite with length in H3; simpl in H3.
-              intuition.
-            - autorewrite with length; simpl; intuition.
+              intuition auto with *.
+            - autorewrite with length; simpl; intuition auto with *.
           }
           inversion H; subst.
           autorewrite with nth_error in Hj; discriminate.
@@ -2465,8 +2465,8 @@ Qed.
               (inversion H as [ ? Ha | ? Ha] ;subst; 
                autorewrite with nth_error in Ha; simpl in Ha; congruence); subst.       
           apply sec_order_cons_dir with (length s2) (length (s2 • (t,Open p')) - 1) (length s2);
-            [constructor 2 | | | ]; autorewrite with nth_error; intuition.
-        * assert (i < length s1) as h_lti by intuition.
+            [constructor 2 | | | ]; autorewrite with nth_error; intuition auto with *.
+        * assert (i < length s1) as h_lti by intuition auto with *.
           assert (exists i', R i i' /\ pi i s1 = pi i' s2) as [i' [Ha Hb]] by compatibility2.
           assert (i' < length s2) by (destruct HR as [ [h_r ] ]; apply (h_r _ _ Ha)).
           assert (pi i (s1 • (t, Open p')) = pi i' (s2 • (t,Open p'))) as h_eq_i_i'. 
@@ -2477,7 +2477,7 @@ Qed.
           apply sec_order_cons_dir with i' (length (s2 • (t,Open p')) - 1) (length s2);
             [ constructor 2; [rewrite <- h_eq_i_i'; inversion H; assumption | assumption] | | |];
             autorewrite with length nth_error in *; simpl in *; unfold Event.t in *;
-            first [congruence | intuition].
+            first [congruence | intuition auto with *].
       + assert (k < length s1). 
         {
           assert (k < length (s1 • (t,a))) by eauto with nth_error.
@@ -2488,9 +2488,9 @@ Qed.
             autorewrite with nth_error in H1; simpl in H1.
             congruence.
           }
-          intuition.
+          intuition auto with *.
         }
-        assert (i < length s1) by intuition. 
+        assert (i < length s1) by intuition auto with *. 
         assert (pi k (s1 • (t,a)) = pi k s1) by eauto with nth_error.
         assert (pi i (s1 • (t,a)) = pi i s1) by eauto with nth_error. 
         destruct (eq_action_dec a (Open p)); [subst|].
@@ -2503,7 +2503,7 @@ Qed.
              assert (action_of (pi i (s1 • (t,Open p))) == Open p) by now inversion H.
              wf_intuition.
            }
-           exfalso; intuition.
+           exfalso; intuition auto with *.
         * assert (sec_order s1 p p') by eauto using sec_order_se_s_neq.
           assert (sec_order s2 p p') by (eapply compatible_seq_order; first [exists R; eauto | eauto]).
           now apply sec_order_s_se.
@@ -2531,7 +2531,7 @@ Qed.
             autorewrite with length in H3; simpl in H3.
             assert (i <> length s1) by
                 (intro; subst; autorewrite with nth_error in H; simpl in H; congruence).
-            intuition.
+            intuition auto with *.
           }
           assert (pi i (s1 • (t, Open p')) = pi i s1) by eauto with nth_error.
           assert (exists j, R i j /\ pi i s1 = pi j s2) as [j [Ha Hb]] by compatibility2.
@@ -2565,7 +2565,7 @@ Qed.
             intro; subst; exfalso.
             rewrite pi_length_cons in H0; simpl in H0.
             injection H0; intro; subst.
-            intuition.
+            intuition auto with *.
           }
           autorewrite with length in H3; simpl in H3.
           lia.
@@ -2606,7 +2606,7 @@ Proof.
   - assert (i = length s1).
     {
       autorewrite with length in h_lt; simpl in h_lt.
-      intuition.
+      intuition auto with *.
     }
     subst.
     exists (length s2).
@@ -2656,7 +2656,7 @@ Proof.
       destruct H2.
       unfold restricted in r.
       destruct (r _ _ H1).
-      exfalso; intuition.
+      exfalso; intuition auto with *.
   - destruct Hx.
     + assert (i' = j').
       {
@@ -2701,10 +2701,10 @@ Proof.
           destruct HR.
           destruct H1.
           destruct (r _ _ Hu).
-          exfalso; intuition.
+          exfalso; intuition auto with *.
         -assert (i < length (s2 •e)) by eauto with nth_error.
          autorewrite with length in H3; simpl in H3.
-         intuition.
+         intuition auto with *.
       }
       assert (j = length s2).
       {
@@ -2735,10 +2735,10 @@ Proof.
           destruct HR.
           destruct H1.
           destruct (r _ _ Hu).
-          exfalso; intuition.
+          exfalso; intuition auto with *.
         - assert (j < length (s2 •e)) by eauto with nth_error.
           autorewrite with length in H4;simpl in H4.
-          intuition.
+          intuition auto with *.
       }
       congruence.
       Qed.
@@ -2831,8 +2831,8 @@ Proof.
         assumption.
       * assert (j < length (s2 • e)) by eauto with nth_error.
         autorewrite with length in H7; simpl in H7.
-        assert (j = length s2) by intuition.
-        intuition.
+        assert (j = length s2) by intuition auto with *.
+        intuition auto with *.
   - destruct Hx.
     + assert (j < length s2). 
       {
@@ -2891,7 +2891,7 @@ Proof.
         assumption.
       * assert (i < length (s2 • e)) by eauto with nth_error.
         autorewrite with length in H7; simpl in H7.
-        assert (i = length s2) by intuition.
+        assert (i = length s2) by intuition auto with *.
         assert (length s1 < j').
         {
           rewrite H8 in h_fork.
@@ -2902,7 +2902,7 @@ Proof.
           reflexivity.
           congruence.
         }
-        exfalso; intuition.
+        exfalso; intuition auto with *.
     + assert (length s1 < length s1).
       {
         subst.
@@ -2910,7 +2910,7 @@ Proof.
         congruence.
         congruence.
       }
-      exfalso; intuition.
+      exfalso; intuition auto with *.
 Qed.
 
 Lemma wf_open_close_s1e_s2e : 
@@ -2937,7 +2937,7 @@ Proof.
         destruct H0.
         apply (r _ _ H). 
       }
-      intuition.
+      intuition auto with *.
     - congruence.
   }
   assert (exists j, R j j' /\ pi j' s1 = pi j s2) as [j [Hx Hy]].
@@ -3025,10 +3025,10 @@ Proof.
             destruct H2.
             apply (r _ _ Hm).
           }
-          exfalso; intuition.
+          exfalso; intuition auto with *.
         - assert (i < length (s2 • e)) by eauto with nth_error.
           autorewrite with length in H1; simpl in H1.
-          intuition.
+          intuition auto with *.
       }
       subst.
       destruct HR.
@@ -3067,7 +3067,7 @@ Lemma sec_order_s2e_s1e :
       }
       destruct (Peano_dec.eq_nat_dec i (length s2)); [subst|].
       + replace j with (length s2) in * by lia.
-        replace k with (length s2) in * by intuition.
+        replace k with (length s2) in * by intuition auto with *.
         autorewrite with nth_error in H1.
         assert (action_of (pi (length s1) (s1 • e)) == Open p).
         {
@@ -3132,13 +3132,13 @@ Lemma sec_order_s2e_s1e :
               destruct (Peano_dec.eq_nat_dec i k); [subst|].
               - assert (i' = k') by
                     (inversion HR as [[ ] _ ]; eauto).
-              intuition.
+              intuition auto with *.
               - assert (synchronizeWith s2 i k).
                   {
                     constructor 1.
                     case_eq (pi k s2); [intros [t0 a0] h_eq | intros h_eq].
                     constructor 1 with t0.
-                    intuition.
+                    intuition auto with *.
                     unfold Event.t in *; rewrite <- H5.
                     rewrite H2.
                     rewrite H10.
@@ -3159,7 +3159,7 @@ Lemma sec_order_s2e_s1e :
                   {
                     now apply synchronizeWithOrder with s1.
                   }
-                  intuition.
+                  intuition auto with *.
             }
             destruct (Peano_dec.eq_nat_dec j (length s2)); [subst|].
             - constructor 1 with i' (length s1) k'.
@@ -3173,7 +3173,7 @@ Lemma sec_order_s2e_s1e :
                 contradict HNotClosed.
                 now apply occursIn_s1e_s2e with s1.
                 autorewrite with length; simpl; lia.
-              + intuition.
+              + intuition auto with *.
               + congruence.
               + congruence.
             - assert (j < length s2) by lia.
@@ -3205,14 +3205,14 @@ Lemma sec_order_s2e_s1e :
                     inversion H18.
                     eapply H21; eauto.
                   }
-                  intuition.
-                - assert (k < j) by intuition.
+                  intuition auto with *.
+                - assert (k < j) by intuition auto with *.
                   assert (synchronizeWith s2 k j).
                   {
                     constructor 1.
                     case_eq (pi k s2); [intros [t0 a0] h_eq | intros h_eq].
                     constructor 1 with t0.
-                    intuition.
+                    intuition auto with *.
                     unfold Event.t in *; rewrite h_eq; reflexivity.
                     assert (wf_occurences (s2 • e)).
                     now apply wf_occurences_s1e_s2e with s1.
@@ -3242,14 +3242,14 @@ Lemma sec_order_s2e_s1e :
                   }
                   assert (k' < j').
                   now apply synchronizeWithOrder with s1.
-                  intuition.
+                  intuition auto with *.
               }
               inversion H; subst.
               + constructor 1 with i' j' k'.
                 constructor 1.
                 congruence.
                 congruence.
-                intuition.
+                intuition auto with *.
                 congruence.
                 congruence.
               + constructor 1 with i' (length s1) k'.
@@ -3259,7 +3259,7 @@ Lemma sec_order_s2e_s1e :
                 contradict HNotClosed.
                 now apply occursIn_s1e_s2e with s1.
                 autorewrite with length; simpl; lia.
-                intuition.
+                intuition auto with *.
                 congruence.
                 congruence.
           }
@@ -3289,7 +3289,7 @@ Lemma sec_order_s2e_s1e :
           eauto with nth_error.
           autorewrite with length; simpl; lia.
         }
-        assert (i < length s2) by intuition.
+        assert (i < length s2) by intuition auto with *.
         assert (s2 ~= s1) as [R HR].
         now apply compatible_sym.
         assert (exists j, R i j /\ pi i s2 = pi j s1) as [j [Hn Hm]].
@@ -3317,7 +3317,7 @@ Lemma sec_order_s2e_s1e :
           destruct e; simpl in *.
           injection H0; injection H1; intros; subst.
           reflexivity.
-        - assert (i' < length s2) by intuition.
+        - assert (i' < length s2) by intuition auto with *.
           assert (exists j', R i' j' /\ pi i' s2 = pi j' s1) 
             as [j' [Ho Hoo]].
           compatibility2.
@@ -3554,11 +3554,11 @@ Qed.
       {
         intro; subst.
         autorewrite with nth_error in Ha'; injection Ha'; intros; subst.
-        exfalso; intuition.
+        exfalso; intuition auto with *.
       }
-      intuition.
+      intuition auto with *.
     }
-    assert (i < length s) by intuition.
+    assert (i < length s) by intuition auto with *.
     unfold Event.t in *.
     replace (pi i (s • (t,a))) with (pi i s) in Ha by (symmetry; eauto with nth_error).
     replace (pi j (s • (t,a))) with (pi j s) in Ha' by (symmetry; eauto with nth_error).

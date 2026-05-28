@@ -5,7 +5,7 @@
 (** printing -> #&#x02192;# *)
 (** printing • #&#8226;# *)
 
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.ListBasics.
 
 Require Import sections.lifo.Prelude.
@@ -14,15 +14,15 @@ Require Import sections.traces.Trace.
 Require Import sections.traces.Trace_Basics_projection.
 Require Import sections.traces.Trace_Basics_occurences.
 
-Require Import Lia.
+From Stdlib Require Import Lia.
 
 Module Make (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Import Tr : Trace.T Perm Address T V)
-            ( Import P : Proj Perm Address T V Tr)
-            ( Import O : OccurencesT Perm Address T V Tr P).
+            ( Import TraceMod : Trace.T Perm Address T V)
+            ( Import P : Proj Perm Address T V TraceMod)
+            ( Import O : OccurencesT Perm Address T V TraceMod P).
 
   (** ** Range *)
   
@@ -39,16 +39,14 @@ Module Make (Perm : MiniDecidableSet)
           i = i' /\ j = j'.
   Proof.
     intros s h_wf_occurences p i j h_range i' j' h_range'.
-    Admitted.
-    (* inversion h_range as [? h_open ? | ? ? h_not_closed]; 
-      inversion h_range' as [? h_open' ? | ? ? h_not_closed']; 
-      subst; split; 
-      solve [ wellFormed_occurences (Open p) 
-            | wellFormed_occurences (Close p) | 
-            elim h_not_closed;eauto 
-            | elim h_not_closed'; eauto 
-            | reflexivity].
-  Qed.  *)
+    inversion h_range as [i0 h_open j0 h_close | i0 h_open h_not_closed];
+      inversion h_range' as [i1 h_open' j1 h_close' | i1 h_open' h_not_closed'];
+      subst.
+    - split; wellFormed_occurences (Open p) || wellFormed_occurences (Close p).
+    - exfalso; apply h_not_closed'; eexists; eassumption.
+    - exfalso; apply h_not_closed; eexists; eassumption.
+    - split; [wellFormed_occurences (Open p) | reflexivity].
+  Qed.
 
   Hint Resolve range_functionnal : range.
   
@@ -140,8 +138,12 @@ Module Make (Perm : MiniDecidableSet)
     - assert (action_of (pi i (s • e)) == Open p) by eauto with nth_error.
       right; destruct e as [t a]; destruct (eq_action_dec a (Close p)); [subst |].
       + constructor 1;[ eauto with nth_error | now autorewrite with nth_error].
-      + admit.
-Admitted.
+      + replace (length s) with (length (s • (t, a)) - 1)
+          by (rewrite length_app; simpl; lia).
+        constructor 2.
+        * assumption.
+        * apply notOccursIn_s_se; assumption.
+  Qed.
 
   Hint Resolve range_s_se_lt range_s_se : range.
 
@@ -167,12 +169,10 @@ Admitted.
       inversion h_range; subst.
       - now nth_error_rewrite Hj.
       - exfalso.
-      admit. 
-      (* autorewrite with length in h_lt; simpl in h_lt; lia. *)
+        rewrite length_app in h_lt; simpl in h_lt; lia.
     }
     auto using range_closed.
-  (* Qed. *)
-Admitted.  
+  Qed.
   Fact range_se_s_neq_open : 
     forall s  t a, 
       wf_occurences (s • (t,a)) ->
@@ -192,8 +192,7 @@ Admitted.
         destruct (lt_eq_lt_dec i (length s)) as [ []|  ]; [assumption | subst | ].
         - autorewrite with nth_error in H; injection H; intros; subst; intuition.
         - obtain_range_inequalities h_range.
-          admit.
-          (* autorewrite with length in h_lt_i_s; simpl in h_lt_i_s; intuition. *)
+          rewrite length_app in h_lt_i_s; simpl in h_lt_i_s; lia.
       }
       eauto 4 with nth_error.
     }
@@ -210,8 +209,7 @@ Admitted.
       }
       split; [assumption|constructor 1; auto using range_closed].
     - right; split; [assumption | constructor 2; auto using range_opened].
-  (* Qed. *)
-Admitted.
+  Qed.
   Hint Resolve range_se_s_lt range_se_s_neq_open : range.
   
   (** *** other properties *)
@@ -239,9 +237,9 @@ Module Type RangeT (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr)
-            ( O : OccurencesT Perm Address T V Tr P).
-  Include Make Perm Address T V Tr P O.
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod)
+            ( O : OccurencesT Perm Address T V TraceMod P).
+  Include Make Perm Address T V TraceMod P O.
 End RangeT.
 (* end hide *)

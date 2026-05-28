@@ -1,4 +1,4 @@
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.ListBasics.
 
 Require Import sections.lifo.Prelude.
@@ -7,17 +7,17 @@ Require Import sections.traces.Trace.
 Require Import sections.traces.Trace_Basics_projection.
 Require Import sections.traces.Trace_Basics_occurences.
 
-Require Import Lia.
+From Stdlib Require Import Lia.
 
 Module Make (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr)
-            ( O : OccurencesT Perm Address T V Tr P).
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod)
+            ( O : OccurencesT Perm Address T V TraceMod P).
 
-  Import Tr.
+  Import TraceMod.
   Import P.
 
    (** ** Father *)
@@ -69,8 +69,8 @@ Module Type FatherT (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr)
-            ( O : OccurencesT Perm Address T V Tr P).
-Include Make Perm Address T V Tr P O.
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod)
+            ( O : OccurencesT Perm Address T V TraceMod P).
+Include Make Perm Address T V TraceMod P O.
 End FatherT.

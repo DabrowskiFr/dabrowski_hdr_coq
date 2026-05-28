@@ -1,17 +1,17 @@
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.ListBasics.
 Require Import sections.lifo.Prelude.
 Require Import sections.common.GenericTrace.
 Require Import sections.traces.Trace.
 Require Import sections.traces.Trace_Basics_projection.
-Require Import Lia.
+From Stdlib Require Import Lia.
 
 Module Make (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Import Tr : Trace.T Perm Address T V)
-            ( Import P : Proj Perm Address T V Tr).
+            ( Import TraceMod : Trace.T Perm Address T V)
+            ( Import P : Proj Perm Address T V TraceMod).
   
   (** ** see *)
   
@@ -90,7 +90,7 @@ Module Type SeeT (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr).
-Include (Make Perm Address T V Tr P).
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod).
+Include (Make Perm Address T V TraceMod P).
 End SeeT.

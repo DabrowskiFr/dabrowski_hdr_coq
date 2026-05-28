@@ -1,5 +1,5 @@
 (* Lemma a : forall x : nat, x = x + 1.
-Admitted. *)
+Qed. *)
 
 (* Print Rewrite HintDb length. *)
 

@@ -1,6 +1,5 @@
-Require Import Arith Lia.
-Require Import Min.
-Require Import Coq.Lists.List.
+From Stdlib Require Import Arith Lia NArith ZArith Sorting.Sorting.
+From Stdlib Require Import Lists.List.
 
 Require Import sections.lifo.Misc.
 Require Import sections.lifo.InSig.
@@ -21,28 +20,9 @@ Section SeqTools.
     forall (n q r:nat),
       seq n (q+r) = seq n q ++ seq (n+q) r.
   Proof.
-    intros s q r.
-    eapply nthSameLengthEqual.
-    rewrite app_length. repeat (rewrite seq_length). reflexivity.
-    instantiate (1:=0).
-    intros.
-    rewrite seq_length in H.
-    rewrite seq_nth.
-    assert (n < q \/ q <= n) as Disj.  lia. elim Disj.
-    intro. rewrite app_nth1. rewrite seq_nth. reflexivity.
-    assumption.
-    rewrite seq_length. assumption.
-    intro. rewrite app_nth2. rewrite seq_nth. rewrite seq_length. firstorder. 
-    admit.
-    admit.
-    admit.
-    admit.
-    admit.
-    (* rewrite seq_length. lia.
-    rewrite seq_length. unfold ge. assumption.
-    assumption. *)
-Admitted.
-    (* Qed. *)
+    intros n q r.
+    apply seq_app.
+  Qed.
 
   (** seq and append from [0] to [q+r]*)
   Lemma seqApp0: 
@@ -64,12 +44,12 @@ Admitted.
   Proof.
     intros start m length proof1 proof2.
     case_eq(m+1);[ intro mp1_0 | intros n mp1_sn].
-    contradict mp1_0; rewrite plus_comm; change (m+1) with (S m); simpl; discriminate.
+    contradict mp1_0; rewrite Nat.add_comm; change (m+1) with (S m); simpl; discriminate.
     simpl. 
     set (q:=m-start).
     assert( m_qtart_q : m=start +q)  by (subst q; auto with arith).   
     replace ( m :: seq (S n) (length - ( q+ 1))) with ( seq (m) (S(length - (q+1)))) by (
-      simpl; rewrite plus_comm in *; change (1+m) with (S m) in *;  rewrite mp1_sn;   reflexivity).   
+      simpl; rewrite Nat.add_comm in *; change (1+m) with (S m) in *;  rewrite mp1_sn;   reflexivity).   
     rewrite m_qtart_q.
     rewrite <- seqAppN .
     assert ( H : (q + S (length - (q + 1)))= length) by lia.
@@ -81,40 +61,19 @@ Admitted.
     forall (i x: nat), 
       List.In x (seq 0 i) -> x < i.
   Proof.
-    intros ? ? H.
-    destruct (@inLtLengthNth _ _ _ H) as [? [Ha Hb]].
-    generalize (Hb i); clear Hb; intro Hb.
-    rewrite seq_length in Ha.
-    rewrite seq_nth in Hb.
-    simpl in Hb.
-    rewrite <- Hb.
-    assumption.
-    assumption.
+    intros i x H.
+    apply in_seq in H.
+    lia.
   Qed.
 
 (** if [x] is in [seq i j] then [i<x] *)
   Lemma inSeqGt (i j x: nat): 
     List.In x (seq i j) -> i <= x.
   Proof.
-    induction i.
-    intros. auto with arith.
-    intros.
-         induction j. 
-               simpl in H. contradict H. 
-               replace ( seq (S i) (S j)) with ( seq(S i) j ++ seq ((S i) + j) 1) in H;[|
-                     replace (S j ) with (j + 1) by (simpl;rewrite plus_comm; auto with arith);symmetry;apply seqAppN
-               ].
-               rewrite in_app_iff in H.
-               simpl in H.
-               elim H.
-                    apply IHj.
-                    admit.
-                    admit.
-                    (* intros H0. elim H0.                *)
-                    (* intros H1. rewrite <- H1. auto with arith.
-                    intros H1. elim H1. *)
-  Admitted.
-                    (* Qed. *)
+    intro H.
+    apply in_seq in H.
+    lia.
+  Qed.
 
   (** if [x] i in [seq start len] then [x<len+start] *)
   Lemma inSeqLt:
@@ -123,19 +82,19 @@ Admitted.
       x < start+len.
   Proof.
     intros start len x H.
-    apply inSeq0Lt; rewrite seqApp0; rewrite in_app_iff; right ; assumption.
+    apply in_seq in H.
+    lia.
   Qed.
 
 
   (** if [x] i in [seq start len] then [x>=start] *)
   Lemma inSeqLe : forall len n start, In n (seq start len) -> n >= start.
   Proof.
-  induction len.
-   intuition. (* simpl in H. destruct H. *)
-   intros. destruct H.
-   intuition.
-   assert (n >= S start). apply IHlen. intuition.
-   intuition.
+    induction len as [|len IHlen]; intros n start H.
+    - simpl in H; contradiction.
+    - simpl in H. destruct H as [H | H].
+      + subst; lia.
+      + specialize (IHlen n (S start) H); lia.
   Qed.
 
   Program Definition strongSeq (start len : nat) : 
@@ -151,29 +110,10 @@ Admitted.
     forall m n s, 
       firstn n (seq s m) = seq s (min m n).
   Proof.
-  Admitted.
-    (* intros.
-    apply nthSameLengthEqual with (d:=0).
-    rewrite firstn_length.
-    repeat (rewrite seq_length).
-    apply min_comm.
-    intros.
-    rewrite firstn_length in H. rewrite seq_length in H.
-    pattern (min m n).
-    destruct (min_dec m n).
-    rewrite e.
-    apply firstn_nth.
-    apply lt_le_trans with (m:=min n m). assumption. auto with arith.
-    rewrite e.
-    rewrite firstn_nth.
-    replace (seq s m) with (seq s n ++ seq (s+n) (m-n)).
-    rewrite app_nth1. reflexivity.
-    rewrite seq_length. rewrite <- e. rewrite min_comm. assumption.
-    rewrite <- seqAppN. f_equal.
-    symmetry. apply le_plus_minus.
-    rewrite <- e. auto with arith.
-    apply lt_le_trans with (m:=min n m). assumption. auto with arith.
-  Qed. *)
+    induction m as [|m IH]; intros n s; destruct n; simpl; auto.
+    rewrite IH.
+    reflexivity.
+  Qed.
 
   (** The list without the first [n] elements of [seq s m] is the
      sequence from [s+n] to [m-n] *)
@@ -181,28 +121,8 @@ Admitted.
     forall m n s, 
       skipn n (seq s m) = seq (s+n) (m-n).
   Proof.
-    intros.
-    pose (mn:=le_lt_dec m n).
-    destruct mn.
-    replace (m-n) with 0 by lia.
-    rewrite le_plus_minus with (m:=n) (n:=m).
-    rewrite plus_comm.
-    rewrite <- skipn_compose.
-    replace (skipn m (seq s m)) with (skipn (length (seq s m)) (seq s m)).
-    rewrite skipn_length_l.
-    simpl. rewrite skipn_nil.
-    reflexivity.
-    rewrite seq_length; reflexivity. trivial.
-    rewrite le_plus_minus with (m:=m) (n:=n).
-    rewrite seqAppN.
-    rewrite skipn_app2.
-    rewrite seq_length.
-    rewrite <- minus_n_n. simpl.
-    rewrite minus_plus.
-    reflexivity.
-    rewrite seq_length. auto.
-    apply lt_le_weak.
-    trivial.
+    intros m n s.
+    apply Stdlib.Lists.List.skipn_seq.
   Qed.
 
 Lemma seqShiftGen:
@@ -211,8 +131,8 @@ Lemma seqShiftGen:
       Proof.
         induction len; simpl.
           trivial.
-          intros start offset; f_equal; rewrite IHlen; rewrite plus_comm; 
-            simpl; rewrite plus_comm; trivial.
+          intros start offset; f_equal; rewrite IHlen; rewrite Nat.add_comm; 
+            simpl; rewrite Nat.add_comm; trivial.
       Qed.
 
   Definition replicate (A:Type) (n:nat) (a:A) :=
@@ -224,21 +144,21 @@ Lemma seqShiftGen:
   Proof.
     intros.
     unfold replicate.
-    rewrite map_length.
-    apply seq_length.
+    rewrite length_map.
+    apply length_seq.
   Qed.
 
   Lemma replicateProperty:
   forall (A:Type)(size:nat)(value:A),
     forall a:A, In a (replicate size value) -> value = a.
   Proof.
-    intros A size value a H; induction size as [ _ | size].
+    intros A size value a H; induction size as [| size].
       contradict H.
       simpl in H; destruct H as [H | H].
         assumption.
         rewrite mapConstant with (l2:=seq 0 size) in H;
           unfold replicate in *; intuition.
-          repeat (rewrite seq_length); trivial.
+          repeat (rewrite length_seq); trivial.
   Qed.
 
   Lemma replicateNatProperty:
@@ -248,12 +168,9 @@ Lemma seqShiftGen:
     intros size value m; induction size.
       trivial.
       simpl; rewrite mapConstant with (l2:= seq 0 size); auto;
-        repeat (rewrite seq_length); trivial. unfold replicate in IHsize; 
+        repeat (rewrite length_seq); trivial. unfold replicate in IHsize; 
          rewrite IHsize; lia.
   Qed.
-
-  Require Import NArith.
-  Require Import ZArith.
 
   Open Scope N_scope.
 
@@ -265,13 +182,12 @@ Lemma seqShiftGen:
       trivial.
       unfold replicate; rewrite N2Nat.inj_succ; simpl;
         rewrite mapConstant with (l2:= seq 0 (N.to_nat size)); auto;
-        repeat (rewrite seq_length); trivial. unfold replicate in IHsize.
+        repeat (rewrite length_seq); trivial. unfold replicate in IHsize.
          rewrite IHsize, Nmult_Sn_m; apply N.add_assoc.
   Qed.
 
   Close Scope N_scope.
 
-  Require Import Sorting.Sorting.
   (**
     HdRel definition on seq
   *)
@@ -281,12 +197,12 @@ Lemma seqShiftGen:
   destruct n.
    destruct (seq 1 m).
     constructor.
-    constructor. intuition.
+    constructor. lia.
    destruct m.
     constructor.
     simpl.
     constructor.
-    intuition.
+    lia.
   Qed. 
 
   (**
@@ -306,14 +222,12 @@ Lemma seqShiftGen:
   *)
   Lemma inSeq : forall len start a, start <= a < start + len -> In a (seq start len).
   Proof.
-  induction len ; intros.
-   assert (start < start) by intuition.
-   simpl. intuition.
-   simpl.
-   inversion H. inversion H0.
-    left ; reflexivity.
-    right. apply IHlen.
-    intuition.
+    induction len as [|len IHlen]; intros start a H.
+    - simpl; lia.
+    - simpl.
+      destruct (Nat.eq_dec a start) as [Heq | Hneq].
+      + left; symmetry; exact Heq.
+      + right; apply IHlen; lia.
   Qed.
 
   (**
@@ -329,7 +243,7 @@ Lemma seqShiftGen:
   *)
   Lemma seq_S_app : forall len start, seq start (S len) = seq start len ++ ((start + len) :: nil).
   Proof.
-  induction len ; intros. simpl. rewrite plus_0_r ; reflexivity.
+  induction len ; intros. simpl. rewrite Nat.add_0_r ; reflexivity.
    rewrite seq_S. rewrite IHlen.
    simpl. rewrite plus_n_Sm. reflexivity.
   Qed.
@@ -400,10 +314,10 @@ Lemma mapNthEq: forall (A:Type) (l:list A)(default:A),
 Proof. 
   induction l using rev_ind.
     trivial.
-    intros default; autorewrite with length; rewrite plus_comm;
+    intros default; autorewrite with length; rewrite Nat.add_comm;
       rewrite seq_S_app, map_app; simpl;
         rewrite map_assumption with 
           (g:=(fun position : nat => nth position l default)).
-          rewrite app_nth2; try lia; rewrite minus_diag; simpl; rewrite IHl; trivial.
+          rewrite app_nth2; try lia; rewrite Nat.sub_diag; simpl; rewrite IHl; trivial.
           intros a H; rewrite app_nth1; auto using inSeq0Lt.
 Qed.

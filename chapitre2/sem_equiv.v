@@ -1,5 +1,5 @@
 Require Export sem_inv.
-Require Export Arith.
+From Stdlib Require Export Arith.
 
 Module SemEquivProp (S1 S2:SEMANTIC).
 
@@ -37,7 +37,7 @@ Inductive equiv_val : S1.val -> S2.val -> Prop :=
 | equiv_val_null : equiv_val S1.Null S2.Null
 | equiv_val_loc : forall m1 m2, 
   m1 ~ml m2 -> equiv_val (S1.Loc m1) (S2.Loc m2).
-Hint Constructors equiv_val.
+Hint Constructors equiv_val : core.
 Notation "x ~v y" := (equiv_val x y) (at level 10).
 
 Definition equiv_local (l1:S1.local) (l2:S2.local) : Prop := 
@@ -57,7 +57,7 @@ Notation "x ~s y" := (equiv_stack x y) (at level 10).
 Inductive equiv_bot (A1 A2:Set) (equiv:A1->A2->Prop) : option A1 -> option A2 -> Prop :=
 | equiv_bot_none : equiv_bot A1 A2 equiv None None
 | equiv_bot_some : forall a1 a2, equiv a1 a2 -> equiv_bot A1 A2 equiv (Some a1) (Some a2).
-Implicit Arguments equiv_bot [A1 A2].
+Arguments equiv_bot {A1 A2} _ _ _.
 
 Definition equiv_heap (h1:S1.heap) (h2:S2.heap) : Prop := 
   (forall m1, h1 m1 <> None ->
@@ -104,7 +104,7 @@ Proof.
   intros y; unfold S1.subst, S2.subst.
   comp x y; auto.
 Qed.
-Hint Resolve equiv_subst.
+Hint Resolve equiv_subst : core.
 
 Lemma equiv_updatefield : forall o1 o2 f v1 v2,
   v1 ~v v2 -> o1 ~o o2 -> (S1.updateField o1 f v1) ~o (S2.updateField o2 f v2).
@@ -113,7 +113,7 @@ Proof.
   intros y; unfold S1.updateField, S2.updateField.
   comp f y; auto.
 Qed.
-Hint Resolve equiv_updatefield.
+Hint Resolve equiv_updatefield : core.
 
 Lemma read_equiv : forall sigma1 sigma2 o1 f v1 o2,
   sigma1 ~h sigma2 -> o1 ~ml o2 ->
@@ -433,14 +433,14 @@ Proof.
   unfold rho2'.
   destruct (eq_var 0 0); intuition.
   intros; unfold rho2'.
-  destruct (eq_var x 0); try (apply False_ind; omega).
+  destruct (eq_var x 0); try (apply False_ind; lia).
   destruct (le_gt_dec x (length args)).
   auto.
-  apply False_ind; omega.
+  apply False_ind; lia.
   intros; unfold rho2'.
-  destruct (eq_var x 0); try (apply False_ind; omega).
+  destruct (eq_var x 0); try (apply False_ind; lia).
   destruct (le_gt_dec x (length args)).
-  apply False_ind; omega.
+  apply False_ind; lia.
   auto.
   assert (L:=equiv_stack_length _ _ H1).
   congruence.
@@ -454,7 +454,7 @@ Proof.
   destruct (le_gt_dec z (length args)).
   rewrite H10; auto.
   apply equiv_stack_nth; auto.
-  unfold var in *; omega.
+  unfold var in *; lia.
   rewrite H11; auto.
   (* return *)
   exists (None:S2.action).

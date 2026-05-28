@@ -1,5 +1,5 @@
-Require Import Program.
-Require Export Coq.Classes.Init.
+From Stdlib Require Import Program.
+From Stdlib Require Export Classes.Init.
 Require Import sections.lifo.AlgebraClasses.
 
 Generalizable All Variables.
@@ -230,7 +230,7 @@ Hint Extern 1 (CommutativeRing (flip _ ) _ _ _)=> apply @CommutativeRing_flip_le
 
 
 (** Nat is a Semi Ring. *)
-Require Import Arith.
+From Stdlib Require Import Arith.
 (**  0 is neutral for addition in nat *)
 Program Instance plus_neutral : Neutral plus 0.
 (**  addition in nat is commutative *)
@@ -265,7 +265,7 @@ Program Instance SemiRing_nat : SemiRing plus mult 0 1.
 
 
 (** *Z is a ring*)
-Require Import ZArith.
+From Stdlib Require Import ZArith.
 Open Scope Z_scope.
 (**  0 is neutral for addition in Z *)
 Program Instance Zplus_neutral : Neutral (eqA:=eq) Zplus 0.
@@ -296,7 +296,7 @@ Program Instance Ring_Z : Ring (eqA:=eq) Zplus Zmult 0 1.
 Close Scope Z_scope.
 
 (** Bool is a Semi Ring  *)
-Require Import Bool.
+From Stdlib Require Import Bool.
 Open Scope bool_scope.
 Program Instance orb_neutral : Neutral orb false. 
 Program Instance orb_commutative :  Commutative orb.
@@ -364,7 +364,7 @@ End semiRingProp.
 
 
 (* Section FieldQ. *)
-Require Import QArith. 
+From Stdlib Require Import QArith. 
 Open Scope Q_scope.
 
 Program Instance Q_neutral : Neutral (eqA:=Qeq) Qplus 0.

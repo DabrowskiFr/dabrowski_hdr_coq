@@ -1,6 +1,6 @@
 (** * Booleans functions on lists *)
-Require Import List.
-Require Import Arith.
+From Stdlib Require Import List.
+From Stdlib Require Import Arith.
 
 Set Implicit Arguments.
 
@@ -10,7 +10,7 @@ Definition isNil (A:Type)(l:list A) :=
     | _  => false 
   end.
 
-Hint Unfold isNil.
+Hint Unfold isNil : core.
 
 Lemma isNilTrue : 
   forall (A:Type)(l:list A),
@@ -34,7 +34,7 @@ Proof.
 Qed.
 
 Definition isLengthOf (A:Type) (n:nat) (l:list A)  :=
-  beq_nat (List.length l) n.
+  Nat.eqb (List.length l) n.
 
 Lemma lengthIsLengthOf (A:Type) (l:list A) :
   isLengthOf (length l) l = true.

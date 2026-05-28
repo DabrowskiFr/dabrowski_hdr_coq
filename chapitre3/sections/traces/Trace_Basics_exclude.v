@@ -1,4 +1,4 @@
-Require Import List Arith.
+From Stdlib Require Import List Arith Bool.
 Require Import sections.lifo.Prelude sections.lifo.Nth sections.lifo.In.
 Require Import sections.common.GenericTrace.
 Require Import sections.traces.Trace.
@@ -17,21 +17,21 @@ Require Import sections.lifo.Length.
 Require Import sections.lifo.Firstn_skipn.
 
 
-Require Import Lia.
+From Stdlib Require Import Lia.
 Module Make ( Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
+            ( TraceMod : Trace.T Perm Address T V)
             (*( TrTH : Trace.Th Perm Address T V)*)
-            ( P : Proj Perm Address T V Tr)
-            ( O : OccurencesT Perm Address T V Tr P)
-            ( F : FatherT Perm Address T V Tr P O) 
-            ( OW : OwnsT Perm Address T V Tr P O)
-            ( R : RangeT Perm Address T V Tr P O)
-            ( Tribe : TribeT Perm Address T V Tr P O F OW R).
+            ( P : Proj Perm Address T V TraceMod)
+            ( O : OccurencesT Perm Address T V TraceMod P)
+            ( F : FatherT Perm Address T V TraceMod P O)
+            ( OW : OwnsT Perm Address T V TraceMod P O)
+            ( R : RangeT Perm Address T V TraceMod P O)
+            ( Tribe : TribeT Perm Address T V TraceMod P O F OW R).
 
-  Import Tr P O F OW R Tribe.
+  Import TraceMod P O F OW R Tribe.
 
   (** pending *)
   
@@ -75,7 +75,7 @@ Module Make ( Perm : MiniDecidableSet)
       + inversion h_i; subst; autorewrite with nth_error in Hi; discriminate.
       + replace (length s - 0) with (length s) in * by lia.
       exists (length s).
-      assert (length s  < length (p0::s)) by intuition.
+      assert (length s  < length (p0::s)) by intuition auto with *.
       eauto with nth_error.
       + autorewrite with length; simpl.
       now replace (length s + 1 - 1) with (length s) by lia.
@@ -124,7 +124,7 @@ Module Make ( Perm : MiniDecidableSet)
       exists(Open p); eassumption.
     }
     assert (i < length s) as Hi_s 
-           by (autorewrite with length in * ; simpl in *; intuition).
+           by (autorewrite with length in * ; simpl in *; intuition auto with *).
     assert (action_of (pi i (s • e)) == Open p) as Ha_i_se
            by now inversion h_range.
     assert (action_of (pi i s) == Open p) as Ha_i_s
@@ -141,7 +141,7 @@ Module Make ( Perm : MiniDecidableSet)
           wellFormed_occurences (Close p).
         }
         rewrite Hi0_eq in Hi0.
-        elim (Lt.lt_irrefl (length s) Hi0).
+        elim (Nat.lt_irrefl (length s) Hi0).
       - elim H2.
         now apply occursIn_s_se.
     }
@@ -241,7 +241,7 @@ Module Make ( Perm : MiniDecidableSet)
     assumption.
     assumption.
     intro.
-    injection H3; intuition.
+    injection H3; intuition auto with *.
     intro; elim H2.
     apply tribe_s_se.
     assumption.
@@ -497,7 +497,7 @@ Module Make ( Perm : MiniDecidableSet)
         simpl.
         case_eq (eq_action_dec (Open p) (Open p)). 
         + auto.
-        + intros n H0. intuition.
+        + intros n H0. intuition auto with *.
     }
     destruct Hin as [[t1 a] [Hfind Hf]].
     assert (a = Open p) as Hop.
@@ -544,14 +544,151 @@ Module Make ( Perm : MiniDecidableSet)
 
    Import ListNotations.
 
-   Definition getSection (s : Tr) (p : Perm.t) : Tr :=
-     let s' := dropWhile (fun x =>  if (eq_action_dec (snd x) (Open p)) then false else true ) s in
-       takeWhile (fun x => if (eq_action_dec (snd x) (Close p)) then false else true) s'.
-   
-   
-   Definition getTribeChild (tribe:list threadId)(e:Event.t) : list threadId :=
+	   Definition getSection (s : Tr) (p : Perm.t) : Tr :=
+	     let s' := dropWhile (fun x =>  if (eq_action_dec (snd x) (Open p)) then false else true ) s in
+	       takeWhile (fun x => if (eq_action_dec (snd x) (Close p)) then false else true) s'.
+
+	   Lemma wf_occurences_cons_inv :
+	     forall e s, wf_occurences (e::s) -> wf_occurences s.
+	   Proof.
+	     unfold wf_occurences, occursAtMostOnce.
+	     intros e s Hwf a Hsingle i j Hi Hj.
+	     apply Nat.succ_inj.
+	     apply Hwf with a; auto.
+	   Qed.
+
+	   Lemma dropWhile_open_index :
+	     forall s p i,
+	       wf_occurences s ->
+	       action_of (pi i s) == Open p ->
+	       dropWhile (fun x => if eq_action_dec (snd x) (Open p) then false else true) s =
+	       skipn i s.
+	   Proof.
+	     induction s as [| [tid a] s IH]; intros p i Hwf Hopen.
+	     - destruct i; simpl in Hopen; discriminate.
+	     - destruct i as [|i].
+	       + simpl in *.
+	         unfold lift in Hopen; simpl in Hopen.
+	         injection Hopen as Ha; subst a.
+	         destruct (eq_action_dec (Open p) (Open p)) as [_|Hneq]; [reflexivity | contradiction].
+	       + simpl in *.
+	         destruct (eq_action_dec a (Open p)) as [Ha|Ha].
+	         * subst a.
+	           assert (0 = S i) as Habs.
+	           {
+	             apply Hwf with (a:=Open p); [constructor | reflexivity | exact Hopen].
+	           }
+	           discriminate.
+	         * apply IH.
+	           -- now apply wf_occurences_cons_inv with (tid, a).
+	           -- exact Hopen.
+	   Qed.
+
+	   Lemma takeWhile_nth_in :
+	     forall (A:Type) (f:A -> bool) l n x,
+	       nth_error l n == x ->
+	       (forall m y, m <= n -> nth_error l m == y -> f y = true) ->
+	       In x (takeWhile f l).
+	   Proof.
+	     induction l as [|y ys IH]; intros n x Hnth Htrue.
+	     - destruct n; simpl in Hnth; discriminate.
+	     - destruct n as [|n].
+	       + simpl in *.
+	         injection Hnth as Hxy; subst x.
+	         rewrite (Htrue 0 y); [left; reflexivity | lia | reflexivity].
+	       + simpl in *.
+	         assert (f y = true) as Hy by (apply Htrue with 0; [lia | reflexivity]).
+	         rewrite Hy.
+	         right.
+	         apply IH with n.
+	         * exact Hnth.
+	         * intros m z Hm Hz.
+	           apply Htrue with (S m); [lia | exact Hz].
+	   Qed.
+
+	   Lemma nth_error_takeWhile :
+	     forall (A:Type) (f:A -> bool) l n x,
+	       nth_error (takeWhile f l) n == x ->
+	       nth_error l n == x /\
+	       forall m y, m <= n -> nth_error l m == y -> f y = true.
+	   Proof.
+	     induction l as [|y ys IH]; intros n x Hnth.
+	     - destruct n; simpl in Hnth; discriminate.
+	     - simpl in Hnth.
+	       destruct (f y) eqn:Hfy.
+	       + destruct n as [|n].
+	         * simpl in Hnth.
+	           split; [exact Hnth|].
+	           intros m z Hm Hz.
+	           assert (m = 0) by lia.
+	           subst m.
+	           simpl in Hz.
+	           injection Hz; intro; subst.
+	           exact Hfy.
+	         * simpl in Hnth.
+	           destruct (IH n x Hnth) as [Hnth_tail Htrue_tail].
+	           split; [exact Hnth_tail|].
+	           intros m z Hm Hz.
+	           destruct m as [|m].
+	           -- simpl in Hz.
+	              injection Hz; intro; subst.
+	              exact Hfy.
+	           -- apply Htrue_tail with m; [lia | exact Hz].
+	       + destruct n; simpl in Hnth; discriminate.
+	   Qed.
+
+	   Lemma range_fork_in_getSection :
+	     forall s p i j owner k child,
+	       wellFormed s ->
+	       range s p i j ->
+	       i < k <= j ->
+	       threadId_of (pi k s) == owner ->
+	       action_of (pi k s) == Fork child ->
+	       In (owner, Fork child) (getSection s p).
+	   Proof.
+	     intros s p i j owner k child Hwf Hrange [Hik Hkj] Hthread Hfork.
+	     inversion Hwf as [Hocc Hfork_wf Hjoin Hopen_close Hseq Hjoin_see Hjoin_closed Hmutual].
+	     assert (action_of (pi i s) == Open p) as Hopen_i
+	        by (inversion Hrange; subst; assumption).
+	     assert (pi k s == (owner, Fork child)) as Hpi_k
+	        by now apply lift_pair_surjective.
+	     assert (k < length s) as Hklen by (eapply nth_error_defined_lt; eauto).
+	     unfold getSection.
+	     rewrite (dropWhile_open_index s p i Hocc Hopen_i).
+	     apply takeWhile_nth_in with (n:=k - i).
+	     - change (nth_error (skipn i s) (k - i) = Some (owner, Fork child)).
+	       rewrite (@nth_error_skipn Event.t i s (k - i)).
+	       replace (Nat.add i (k - i)) with k by lia.
+	       exact Hpi_k.
+	     - intros m [tid a] Hm Hnth.
+	       destruct (eq_action_dec a (Close p)) as [Hclose|HnotClose].
+	       + subst a.
+	         exfalso.
+	         change (nth_error (skipn i s) m = Some (tid, Close p)) in Hnth.
+	         rewrite (@nth_error_skipn Event.t i s m) in Hnth.
+	         set (r := Nat.add i m) in *.
+	         assert (r <= k) as Hrk by lia.
+	         assert (action_of (pi r s) == Close p) as Hclose_r.
+	         {
+	           unfold r in Hnth.
+	           exact (f_equal (lift (@snd threadId action)) Hnth).
+	         }
+	         inversion Hrange as [? Hopen ? Hclose_j | ? Hopen Hnot_closed]; subst.
+	         * assert (r = j) as Hrj
+	             by (apply Hocc with (a:=Close p); [constructor | exact Hclose_r | exact Hclose_j]).
+	           subst r.
+	           assert (k = j) as Hkj_eq by lia.
+	           subst k.
+	           congruence.
+	         * apply Hnot_closed.
+	           exists r; exact Hclose_r.
+	       + simpl.
+	         destruct (eq_action_dec a (Close p)) as [Heq|_]; [contradiction | reflexivity].
+	   Qed.
+
+	   Definition getTribeChild (tribe:list threadId)(e:Event.t) : list threadId :=
      match snd e with 
-       | Fork t =>List.map (fun _=>t) (List.filter (beq_nat (fst e)) tribe)
+       | Fork t =>List.map (fun _=>t) (List.filter (Nat.eqb (fst e)) tribe)
        | _ => []
      end.
 
@@ -633,10 +770,10 @@ Qed.
          destruct a; trivial.
          simpl.
          case_eq(eq_nat_dec x tid); intros Heq _.
-         * assert(Nat.eqb tid x = true) as Hbeq by (now apply beq_nat_true_iff).
+         * assert(Nat.eqb tid x = true) as Hbeq by (apply Nat.eqb_eq; symmetry; assumption).
            rewrite Hbeq.
            trivial.
-         * assert(Nat.eqb tid x = false) as Hbeq by (apply beq_nat_false_iff; intuition).
+         * assert(Nat.eqb tid x = false) as Hbeq by (apply Nat.eqb_neq; intro Htid; apply Heq; symmetry; assumption).
            rewrite Hbeq.
            trivial.
        + trivial.
@@ -685,7 +822,7 @@ Qed.
      fold_left (fun x e => (getClose e)++x) s [].
    
    Definition opened  (s : Tr) : list Perm.t := 
-     fold_left (fun x e => (getOpen e)++x) s [].
+     flat_map getOpen s.
    
    Definition isPending (s :Tr)(p:Perm.t):bool :=
      let closed := closed s in
@@ -703,8 +840,6 @@ Qed.
       List.hd_error (excludeList s t).
 
    
-   Require Import Bool.
-
    Lemma memActionInMap :
      forall a s ,
        (mem eq_action_dec a (map snd s) = true ) <->
@@ -878,18 +1013,35 @@ Qed.
       In p (opened s) ->
       exists i, action_of (pi i s ) == Open p.
   Proof.
+    intros s p H.
+    unfold opened in H.
+    apply in_flat_map in H.
+    destruct H as [[tid a] [Hin Hopen]].
+    destruct a; simpl in Hopen; try contradiction.
+    destruct Hopen as [Hp | Hnil]; [subst | contradiction].
+    destruct (In_nth_error _ _ _ Hin) as [i Hi].
+    exists i.
+    rewrite Hi.
+    reflexivity.
+  Qed.
+
+  Lemma inClosedIsClose :
+    forall s p,
+      In p (closed s) ->
+      exists i, action_of (pi i s ) == Close p.
+  Proof.
     induction s.
     - intros p H.
       simpl in *; exfalso;auto.
     - intros p H.
-      unfold opened in H.
+      unfold closed in H.
       simpl in H.
       destruct a as [t a].
       destruct a as [ | | | | | | | p'|p']; 
         try (simpl in H;destruct (IHs p) as [i Hi]; 
              auto;exists (S i);simpl;auto).
       simpl in H.
-      assert (In p [p'] \/  In p (opened s)) as H1 by now apply fold_left_list_in.
+      assert (In p [p'] \/  In p (closed s)) as H1 by now apply fold_left_list_in.
       destruct H1 as [Hin | Hfold].
       + assert (p = p') as Heqp 
                by (inversion Hin; simpl in H0; auto; exfalso;trivial).
@@ -898,6 +1050,38 @@ Qed.
       + destruct (IHs p) as [i Hi];auto.
         exists (S i).
         auto.
+  Qed.
+
+  Lemma notOccursIn_isPending :
+    forall s p,
+      ~ occursIn s (Close p) ->
+      isPending s p = true.
+  Proof.
+    intros s p Hnot.
+    unfold isPending.
+    apply negb_true_iff.
+    apply not_true_iff_false.
+    intro Hmem.
+    apply inMemEq in Hmem.
+    destruct (inClosedIsClose _ _ Hmem) as [i Hi].
+    apply Hnot.
+    now constructor 1 with i.
+  Qed.
+
+  Lemma openInOpened :
+    forall s p,
+      (exists i, action_of (pi i s) == Open p) ->
+      In p (opened s).
+  Proof.
+    intros s p [i Hopen].
+    apply lift_snd_inv in Hopen.
+    destruct Hopen as [tid Htid].
+    unfold opened.
+    apply in_flat_map.
+    exists (tid, Open p).
+    split.
+    - now apply nth_errorIn in Htid.
+    - simpl; auto.
   Qed.
 
   Lemma pendingTailClosed: 
@@ -963,6 +1147,106 @@ Qed.
     - exists i.
       now constructor 2.
     - assumption.
+  Qed.
+
+  Lemma pendingInList :
+    forall s p,
+      pending s p ->
+      In p (pendingList s).
+  Proof.
+    intros s p [[i Hrange] Hnot_close].
+    unfold pendingList.
+    apply filter_In.
+    split.
+    - apply openInOpened.
+      exists i.
+      now inversion Hrange.
+    - now apply notOccursIn_isPending.
+  Qed.
+
+  Lemma nth_error_filter_index :
+    forall (A:Type) (f:A -> bool) l n x,
+      nth_error (List.filter f l) n == x ->
+      exists n', nth_error l n' == x.
+  Proof.
+    induction l as [|a l IH]; intros n x Hnth.
+    - destruct n; simpl in Hnth; discriminate.
+    - simpl in Hnth.
+      destruct (f a) eqn:Hfa.
+      + destruct n as [|n].
+        * simpl in Hnth. exists 0; exact Hnth.
+        * destruct (IH n x Hnth) as [n' Hn'].
+          exists (S n'); exact Hn'.
+      + destruct (IH n x Hnth) as [n' Hn'].
+        exists (S n'); exact Hn'.
+  Qed.
+
+  Lemma nth_error_filter_order :
+    forall (A:Type) (f:A -> bool) l i j x y,
+      nth_error (List.filter f l) i == x ->
+      nth_error (List.filter f l) j == y ->
+      i < j ->
+      exists i' j',
+        nth_error l i' == x /\ nth_error l j' == y /\ i' < j'.
+  Proof.
+    induction l as [|a l IH]; intros i j x y Hi Hj Hij.
+    - destruct i; simpl in Hi; discriminate.
+    - simpl in Hi, Hj.
+      destruct (f a) eqn:Hfa.
+      + destruct i as [|i], j as [|j].
+        * lia.
+        * simpl in Hi.
+          destruct (nth_error_filter_index _ f l j y Hj) as [j' Hj'].
+          exists 0, (S j').
+          split; [exact Hi|].
+          split; [exact Hj'|lia].
+        * lia.
+        * destruct (IH i j x y Hi Hj) as [i' [j' [Hi' [Hj' Hlt]]]]; [lia|].
+          exists (S i'), (S j').
+          split; [exact Hi'|].
+          split; [exact Hj'|lia].
+      + destruct (IH i j x y Hi Hj) as [i' [j' [Hi' [Hj' Hlt]]]]; [assumption|].
+        exists (S i'), (S j').
+        split; [exact Hi'|].
+        split; [exact Hj'|lia].
+  Qed.
+
+  Lemma nth_opened_order :
+    forall s p p' i j,
+      nth_error (opened s) i == p ->
+      nth_error (opened s) j == p' ->
+      i < j ->
+      exists i' j',
+        action_of (pi i' s) == Open p /\
+        action_of (pi j' s) == Open p' /\
+        i' < j'.
+  Proof.
+    induction s as [|[tid a] s IH]; intros p p' i j Hi Hj Hlt.
+    - destruct i; simpl in Hi; discriminate.
+    - unfold opened in Hi, Hj.
+      simpl in Hi, Hj.
+      destruct a; simpl in Hi, Hj; try
+        (destruct (IH p p' i j Hi Hj Hlt) as [i' [j' [Hi' [Hj' Hij]]]];
+         exists (S i'), (S j'); simpl; repeat split; auto with *).
+      destruct i as [|i], j as [|j].
+      + lia.
+      + simpl in Hi.
+        injection Hi; intro; subst.
+        assert (In p' (opened s)) as Hin_p'.
+        {
+          apply nth_errorIn with j.
+          unfold opened.
+          exact Hj.
+        }
+        destruct (inOpenedIsOpen _ _ Hin_p') as [j' Hj'].
+        exists 0, (S j').
+        simpl.
+        repeat split; auto with *.
+      + lia.
+      + destruct (IH p p' i j Hi Hj) as [i' [j' [Hi' [Hj' Hij]]]]; [lia|].
+        exists (S i'), (S j').
+        simpl.
+        repeat split; auto with *.
   Qed.
 
 
@@ -1297,69 +1581,135 @@ Qed.
   Qed.
 
   (*a deplacer dans ?*)
-  Lemma in_exists_nth_error :
-    forall (A:Type) (l : list A) (a :A),
-      In a l ->
-      (exists i, nth_error l i == a).
+	  Lemma in_exists_nth_error :
+	    forall (A:Type) (l : list A) (a :A),
+	  In a l ->
+	  (exists i, nth_error l i == a).
   Proof.
     intros A l a H.
     apply in_split in H. destruct H as [l1 [l2 Hl]].
     exists (length l1). rewrite Hl.
     apply nth_error_append_cons_eq.
-  Qed.    
+	  Qed.
 
-  Lemma notIn_flatMap :
-    forall s t1 t2 l,
-      wf_occurences s ->
-      In (t1,Fork t2) s ->
+	  Lemma getTribeChild_fork_in :
+	    forall l tid child t,
+	      In child (getTribeChild l (tid, Fork t)) ->
+	      child = t /\ In tid l.
+	  Proof.
+	    intros l tid child t Hin.
+	    unfold getTribeChild in Hin; simpl in Hin.
+	    apply in_map_iff in Hin.
+	    destruct Hin as [tid' [Heq Hin_filter]].
+	    apply filter_In in Hin_filter.
+	    destruct Hin_filter as [Hin_l Heq_tid].
+	    apply Nat.eqb_eq in Heq_tid.
+	    subst; split; auto.
+	  Qed.
+
+	  Lemma getSection_fork_tribeChildren :
+	    forall s p owner child,
+	      wellFormed s ->
+	      ownerf s p == owner ->
+	      In (owner, Fork child) (getSection s p) ->
+	      tribeChildren s p child.
+	  Proof.
+	    intros s p owner child Hwf Howner Hin.
+	    inversion Hwf as [Hocc Hfork_wf Hjoin Hopen_close Hseq Hjoin_see Hjoin_closed Hmutual].
+	    assert (owns s p owner) as Howns by now apply ownerf_owns.
+	    inversion Howns as [owner' i p' Hthread_i Hopen_i]; subst.
+	    unfold getSection in Hin.
+	    rewrite (dropWhile_open_index s p i Hocc Hopen_i) in Hin.
+	    destruct (in_exists_nth_error _ _ _ Hin) as [n Hnth_take].
+	    destruct (nth_error_takeWhile _ _ _ _ _ Hnth_take) as [Hnth_skip Hbefore_close].
+	    change (nth_error (skipn i s) n = Some (owner, Fork child)) in Hnth_skip.
+	    rewrite (@nth_error_skipn Event.t i s n) in Hnth_skip.
+	    set (k := Nat.add i n) in *.
+	    assert (pi k s == (owner, Fork child)) as Hpi_k by exact Hnth_skip.
+	    assert (threadId_of (pi k s) == owner) as Hthread_k by (rewrite Hpi_k; reflexivity).
+	    assert (action_of (pi k s) == Fork child) as Hfork_k by (rewrite Hpi_k; reflexivity).
+	    assert (i < k) as Hik.
+	    {
+	      destruct n as [|n].
+	      - unfold k in Hpi_k.
+	        replace (Nat.add i 0) with i in Hpi_k by lia.
+	        rewrite Hpi_k in Hopen_i.
+	        discriminate.
+	      - unfold k; lia.
+	    }
+	    destruct (occursIn_dec s (Close p)) as [Hclose_occ | Hnot_close].
+	    - inversion Hclose_occ as [j close_action Hclose_j]; subst.
+	      assert (i < j) as Hij.
+	      {
+	        destruct (Hopen_close j p Hclose_j) as [i' [Hi'j [Hopen_i' _]]].
+	        assert (i' = i) as Heq by (apply Hocc with (a:=Open p); [constructor | exact Hopen_i' | exact Hopen_i]).
+	        subst; assumption.
+	      }
+	      assert (~ j <= k) as Hj_not_le_k.
+	      {
+	        intro Hjk.
+	        apply lift_snd_inv in Hclose_j.
+	        destruct Hclose_j as [tid_close Hpi_j].
+	        assert (nth_error (skipn i s) (j - i) == (tid_close, Close p)) as Hnth_close.
+	        {
+	          change (nth_error (skipn i s) (j - i) = Some (tid_close, Close p)).
+	          rewrite (@nth_error_skipn Event.t i s (j - i)).
+	          replace (Nat.add i (j - i)) with j by lia.
+	          exact Hpi_j.
+	        }
+	        specialize (Hbefore_close (j - i) (tid_close, Close p)).
+	        assert ((j - i) <= n) as Hle by (unfold k in Hjk; lia).
+	        specialize (Hbefore_close Hle Hnth_close).
+	        simpl in Hbefore_close.
+	        destruct (eq_action_dec (Close p) (Close p)); [discriminate | contradiction].
+	      }
+	      constructor 1 with i j owner k; auto; [constructor; assumption | lia].
+	    - assert (k < length s) as Hk_len by (eapply nth_error_defined_lt; eauto).
+	      constructor 1 with i (length s - 1) owner k; auto.
+	      + now constructor 2.
+	      + lia.
+	  Qed.
+
+	  Lemma notIn_flatMap :
+	    forall s t1 t2 l,
+	      wf_occurences s ->
+	      In (t1,Fork t2) s ->
       ~ In t1 l ->
       ~ In t2 (flat_map (getTribeChild l) s).
-  Proof.
-    intros s t1 t2 l Hwfo Hin Hnin Hinflat.
-    rewrite in_flat_map in Hinflat. destruct Hinflat as [[t3 a3] [Hina Hint2]].
-    unfold getTribeChild in Hint2.
-    destruct a3;simpl in Hint2;auto.
-    Admitted.
-(*  case_eq (mem eq_nat_dec t3 l).
-    - intro Hmem. rewrite Hmem in Hint2.
-      assert (t2 = n) as Ht2n.
-      { inversion Hint2. auto.
-        inversion H.
-      }
-      subst. clear Hint2.
-      assert (t1 = t3) as Ht1t3.
-      {
-        apply in_exists_nth_error in Hina.
-        apply in_exists_nth_error in Hin.
-        destruct Hina as [i Hi].
-        destruct Hin as [j Hj].
-        unfold wf_occurences in Hwfo.
-        assert (i = j) as Hij.
-        { unfold occursAtMostOnce in Hwfo. 
-          apply Hwfo with (Fork n);auto.
-          rewrite Hi;auto.
-
-          assert ((@nth_error (prod nat action) s j) = (@nth_error Event.t s j)) as H by auto.
-          rewrite H in Hj.
-          rewrite Hj.
-          auto.
-        }
-        rewrite  Hij in Hi. 
-        Set Printing All.
-        simpl.
-        assert ((@nth_error (prod nat action) s j) = (@nth_error Event.t s j)) as H by auto.
-        rewrite H in Hj.
-        Unset Printing All.
-        simpl.
-        admit.
-      }
-      subst.
-      rewrite <- inMemEq in Hmem.
-      auto.
-    - intro Hmem. rewrite Hmem in Hint2. inversion Hint2.
-  Qed. *)
-
-  Lemma notIn_notOccurs_fork_left:
+	  Proof.
+	    intros s t1 t2 l Hwfo Hin Hnin Hinflat.
+	    rewrite in_flat_map in Hinflat. destruct Hinflat as [[t3 a3] [Hina Hint2]].
+	    unfold getTribeChild in Hint2.
+	    destruct a3; simpl in Hint2; auto.
+	    apply getTribeChild_fork_in in Hint2.
+	    destruct Hint2 as [Ht2 Ht3in].
+	    assert (t1 = t3) as Ht1t3.
+	    {
+	      destruct (in_exists_nth_error _ _ _ Hin) as [i Hi].
+	      destruct (in_exists_nth_error _ _ _ Hina) as [j Hj].
+	      assert (i = j) as Hij.
+	      {
+	        apply Hwfo with (a:=Fork t2).
+	        - constructor.
+	        - unfold lift.
+	          replace (pi i s) with (Some (t1, Fork t2)) by (symmetry; exact Hi).
+	          reflexivity.
+	        - unfold lift.
+	          replace (pi j s) with (Some (t3, Fork t0)) by (symmetry; exact Hj).
+	          simpl; rewrite Ht2; reflexivity.
+	      }
+	      subst j.
+	      assert (Some (t1, Fork t2) = Some (t3, Fork t0)) as Heq.
+	      {
+	        rewrite <- Hi.
+	        exact Hj.
+	      }
+	      injection Heq; auto.
+	    }
+	    subst.
+	    contradiction.
+	  Qed.
+	  Lemma notIn_notOccurs_fork_left:
     forall s t l,
       ~ occursIn s (Fork t) ->
       ~ In t l ->
@@ -1382,10 +1732,14 @@ Qed.
       + intro Hin.
         apply in_app_or in Hin.
         destruct Hin as [HinTr | Hin].
-        * destruct a as [t1 a].
-          destruct a;simpl in HinTr;auto.
-          unfold getTribeChild in HinTr.
-          simpl in HinTr.
+	        * destruct a as [t1 a].
+	          destruct a;simpl in HinTr;auto.
+	          apply getTribeChild_fork_in in HinTr.
+	          destruct HinTr as [Heq Hin_t1].
+	          subst.
+	          contradict H.
+	          constructor 1 with 0.
+	          simpl; reflexivity.
     (*    case_eq (mem eq_nat_dec t1 l).
           {
             intro Hmem.
@@ -1402,239 +1756,119 @@ Qed.
             rewrite Hmem in HinTr.
             inversion HinTr.
           } *)
-          admit.
-        * contradict H0. assumption.
-        Admitted.
-  (* Qed. *)
+	        * contradict H0. assumption.
+	  Qed.
 
-  Lemma inGetTribeForkIn :
+	  Lemma wf_fork_cons_inv :
+	    forall e s,
+	      wf_fork (e::s) ->
+	      wf_fork s.
+	  Proof.
+	    unfold wf_fork.
+	    intros e s Hwf i t Hfork j Hthread.
+	    assert (S i < S j) as Hlt.
+	    {
+	      apply Hwf with t; simpl; assumption.
+	    }
+	    lia.
+	  Qed.
+
+	  Lemma fold_left_getTribe_father :
+	    forall s seed t t',
+	      wf_fork s ->
+	      In t
+	         (fold_left
+	            (fun (trb : list threadId) (e : Event.t) =>
+	               getTribeChild trb e ++ trb) s seed) ->
+	      father s t' t ->
+	      In t'
+	         (fold_left
+	            (fun (trb : list threadId) (e : Event.t) =>
+	               getTribeChild trb e ++ trb) s seed).
+	  Proof.
+	    induction s as [|[tid a] s IH]; intros seed t0 t' Hwf Hin Hfather.
+	    - destruct Hfather as [i [_ Haction]].
+	      destruct i; discriminate.
+	    - destruct Hfather as [i [Hthread Haction]].
+	      destruct i as [|i].
+	      + simpl in Hthread, Haction.
+	        destruct a; try discriminate.
+	        injection Hthread; injection Haction; intros; subst.
+	        assert (In t0 seed) as Hseed.
+	        {
+	          destruct (in_dec Peano_dec.eq_nat_dec t0 seed) as [HinSeed | HnotSeed].
+	          - exact HinSeed.
+	          - exfalso.
+	            assert (occursIn ((t0, Fork t')::s) (Fork t0)) as Hocc.
+	            {
+	              eapply fold_left_fork_occurs with (l:=seed).
+	              - simpl in Hin; exact Hin.
+	              - exact HnotSeed.
+	            }
+	            inversion Hocc as [j fork_action Hfork]; subst.
+	            assert (j < 0) as Hlt.
+	            {
+	              eapply Hwf.
+	              - exact Hfork.
+	              - simpl; reflexivity.
+	            }
+	            lia.
+	        }
+	        now apply fold_left_fork_in2.
+	      + simpl in Hthread, Haction, Hin.
+	        eapply IH.
+	        * now apply wf_fork_cons_inv with (e:=(tid, a)).
+	        * exact Hin.
+	        * exists i; split; assumption.
+	  Qed.
+
+	  Lemma inGetTribeForkIn :
     forall s p t t',
       wellFormed s ->
+      ~ owns s p t ->
       In t (getTribe s p) ->
       father s t' t ->
       In t'  (getTribe s p).
   Proof.
-    intros s p t0 t' Hwf Hin Hfa.
-     inversion Hfa as [i [Ht Ha]]. clear Hfa.
-      inversion Hwf.
-      assert(exists j t1,pi j s == (t1,Fork t0)) as H.
-      { admit.
-      }
-      
-      destruct H as [j [t1 Hj]].
-      assert (action_of (pi j s) == Fork t0) as Hja by ( rewrite Hj;auto).
-
-      assert(j<i) by (unfold wf_fork in WF2; eapply WF2; eassumption).
-      assert(pi i s == (t0,Fork t')) by now apply lift_pair_surjective.
-      assert(i < length s) as Hlen by (eapply nth_error_defined_lt; eauto).
-      assert(s = firstn i s ++ nth i s ((t0,Fork t')):: skipn (S i) s)
-        as Hs by now apply cutInThree.
-      assert (j < length (firstn i s)) as Hlenj by (rewrite firstn_length1; lia).
-      set (si:=(firstn i s)). 
-      assert (firstn i s = firstn j si ++ nth j si ((t0,Fork t')):: skipn (S j) si)  as Hsi by now apply cutInThree.
-      assert (j = length (firstn j si)) 
-        as Hjlen by (autorewrite with length; rewrite min_l; auto with *).
-      rewrite Hjlen in Hj. rewrite Hs in Hj. rewrite Hsi in Hj. 
-      repeat rewrite <- app_assoc in Hj.
-      rewrite <- app_comm_cons in Hj.
-      rewrite nth_error_append_cons_eq in Hj.
-      inversion Hj as [Hj' ].
-
-      assert (i = length (firstn i s))
-        as Hilen by (autorewrite with length; rewrite min_l; auto with *).
-      generalize H0.
-      rewrite Hilen.
-      set (i':=length (firstn i s)). 
-      rewrite Hs . 
-      unfold i'.
-      rewrite nth_error_append_cons_eq.
-      intro Hi.
-      inversion Hi as [Hi'  ]. rewrite Hi'.
-      rewrite Hsi. rewrite Hj'. rewrite Hi'.
-
-      unfold getTribe.
-     
-      assert ( exists t2, (  ownerf
-         (@app Event.t
-            (@app Event.t (@firstn Event.t j si)
-               (@cons Event.t (@pair nat action t1 (Fork t0))
-                  (@skipn Event.t (S j) si)))
-            (@cons Event.t (@pair nat action t0 (Fork t'))
-               (@skipn Event.t (S i) s))) p  ) == t2) as Hown by admit.
-      destruct Hown as [ t2 Hown].
-      autounfold.
-      admit.
-      Admitted. 
-      (* rewrite Hown.
-
-      constructor 2.
-    
-      rewrite <- app_assoc.
-      Set Printing All.
-      rewrite fold_left_app.
-      
-      set (seed:=  (@fold_left (list nat) Event.t
-           (fun (trb : list nat) (e : Event.t) =>
-            @app nat (getTribeChild trb e) trb) (@firstn Event.t j si)
-           (@flat_map Event.t nat (getTribeChild (@cons nat t2 (@nil nat)))
-              (@app Event.t (@firstn Event.t j si)
-                 (@app Event.t
-                    (@cons Event.t (@pair nat action t1 (Fork t0))
-                       (@skipn Event.t (S j) si))
-                    (@cons Event.t (@pair nat action t0 (Fork t'))
-                       (@skipn Event.t (S i) s))))))).
-      Unset Printing All.
-      set (f:= (fun (trb : list threadId) (e : Event.t) =>
-         getTribeChild trb e ++ trb)).
-      unfold getTribe in Hin. rewrite Hs in Hin. rewrite Hi' in Hin. rewrite Hsi in Hin. rewrite Hj' in Hin. autounfold in *. rewrite Hown in Hin.
-     
-      inversion Hin as [Heq | Hin1].
-      (*case_eq (Peano_dec.eq_nat_dec t0 t2).*)
-      + (*t0 = t2,  owner de p*)
-        (*intros Heq H1.*) unfold seed. rewrite Heq in *. (*clear H1.*)
-        apply fold_left_in_seed_gen.
-        apply fold_left_in_seed_gen.
-        
-        admit.
-    (*    
-        (*casse suite a la nouvelle definition de getTribe (tribeChildren correct)*) 
-
-        rewrite flatMapApp.
-        apply in_or_app. right.
-        rewrite flatMapApp.
-        apply in_or_app. right.
-        unfold getTribeChild.
-        simpl.
-        destruct ( eq_nat_dec t0 t0).
-        * left. trivial.
-        * contradict n. trivial.
-        *)
-      + case_eq (Peano_dec.eq_nat_dec t1 t2).
-        * intros Heq H1.
-          unfold seed.
-          rewrite Heq in *.
-          rewrite fold_left_app.
-          apply fold_left_fork_in2.
-          apply fold_left_in_seed_gen.
-          apply fold_left_in_seed_gen.
-          admit.
-           (*    
-        (*casse suite a la nouvelle definition de getTribe (tribeChildren correct)*) 
-
-          rewrite flatMapApp.
-          apply in_or_app.
-          right.
-          simpl.
-          apply in_or_app. left.
-          unfold getTribeChild. simpl.
-          destruct (eq_nat_dec t2 t2). constructor. auto.
-          destruct n;auto.
-            *)
-        * intros Hneq H1.
-          rewrite fold_left_app.
-          unfold f.
-          apply fold_left_fork_in2.  
-          apply fold_left_fork_in2.  
-          
-        rewrite <- app_assoc in Hin1.
-        rewrite fold_left_app in Hin1.
-        rewrite <- app_comm_cons in Hin1.
-        assert (~ occursIn (skipn (S j) si ++ (t0, Fork t') :: skipn (S i) s) (Fork t0)) as Hnocc.
-        {
-          
-          rewrite Hs in WF1. rewrite Hsi in WF1. rewrite Hj' in WF1. rewrite Hi' in WF1.
-          rewrite <-  app_assoc in WF1.  rewrite <- app_comm_cons in WF1. 
-          apply occursIn_not_after with (s1:=(firstn j si ))(t1:=t1);auto.
-        }
-        assert ( ~
-                   In t0
-                   (fold_left
-                      (fun (trb : list threadId) (e : Event.t) =>
-                         getTribeChild trb e ++ trb) (firstn j si)
-                      (flat_map (getTribeChild [t2])
-                                (firstn j si ++
-                                        (t1, Fork t0) :: skipn (S j) si ++ (t0, Fork t') :: skipn (S i) s)))) as Hnint0.
-        {
-          assert (~ occursIn  (firstn j si) (Fork t0)) as Hnocct0. 
-          { apply occursIn_not_before with (skipn (S j) si ++ (t0, Fork t') :: skipn (S i) s) t1.
-            rewrite Hs in WF1. rewrite Hsi in WF1. rewrite Hj' in WF1. rewrite Hi' in WF1.
-            rewrite <-  app_assoc in WF1.  rewrite <- app_comm_cons in WF1. 
-            auto.
-          }
-          assert (~ In t0  (flat_map (getTribeChild [t2])
-           (firstn j si ++
-            (t1, Fork t0) :: skipn (S j) si ++ (t0, Fork t') :: skipn (S i) s))) as Hnin.
-          {
-            apply notIn_flatMap with t1.
-            - rewrite Hs in WF1. rewrite Hsi in WF1. rewrite Hj' in WF1. rewrite Hi' in WF1.
-              rewrite <-  app_assoc in WF1.  rewrite <- app_comm_cons in WF1. 
-              auto.
-            - apply in_or_app. right. constructor. auto.
-            - intro Hint1.
-              inversion Hint1 as [H2 | H2].
-              + destruct Hneq;auto.
-              + inversion H2.            
-          }
-            now apply notIn_notOccurs_fork_left.
-        }
-        
-        apply fold_left_fork_in1 in Hin1;auto.  
-        admit. (*casse suite a la nouvelle definition de getTribe*)
-  Qed. *)
-
-
-  Lemma tribeChildren_getTribe :
+    intros s p t0 t' Hwf HnotOwner Hin Hfather.
+    inversion Hwf.
+    unfold getTribe in *.
+    destruct (ownerf s p) as [owner|] eqn:Howner.
+    - simpl in Hin.
+      destruct Hin as [Heq | Hin].
+      + subst.
+        exfalso.
+        apply HnotOwner.
+        now apply ownerf_owns with (p:=p).
+      + constructor 2.
+        eapply fold_left_getTribe_father; eauto.
+    - inversion Hin.
+  Qed.
+	  Lemma tribeChildren_getTribe :
     forall s p t,
       wellFormed s ->
       tribeChildren s p t ->
       In t (getTribe s p).
   Proof.
     intros s p t0 Hwf Htc.
-    induction Htc; subst.
-    - unfold getTribe.
-      assert(ownerf s p == t0) as Hown by now apply ownsOwnerRev.
-      assert(pi k s == (t0,Fork t')) by now apply lift_pair_surjective.
-      assert(k < length s) as Hlen by (eapply nth_error_defined_lt; eauto).
-      rewrite Hown.
-      constructor 2.
-      assert(s = firstn k s ++ nth k s ((t0,Fork t')):: skipn (S k) s)
-            as Hs by now apply cutInThree.
-      assert(k = length (firstn k s)) 
-            as Hklen by (autorewrite with length; rewrite min_l; auto with *).
-      revert H2. revert H3.
-      rewrite Hklen.
-      set(k':=length(firstn k s)).
-      rewrite Hs.
-      unfold k'.
-      intros Ht Ha.
-      apply lift_fst_inv in Ha.
-      apply lift_snd_inv in Ht.
-      destruct Ha as [y Ha].
-      destruct Ht as [x Ht].
-      rewrite nth_error_append_cons_eq in Ha.
-      rewrite nth_error_append_cons_eq in Ht.
-      inversion Ht; inversion Ha.
-      rewrite H3 in H5. inversion H5.
-      rewrite H6 in *. clear x H6.
-      rewrite <- H7 in *. clear y H7 H5.
-      rewrite H3.
-      
-      admit.
-      (*
-        (*casse suite a la nouvelle definition de getTribe*)
-      rewrite flatMapApp.
-      apply fold_left_in_seed_gen.
-      apply in_or_app. right.
-      simpl. apply in_or_app. left.
-      unfold getTribeChild. simpl.
-      destruct(eq_nat_dec t0 t0) as [H'|H'].
-      + intuition.
-      + contradict H'; trivial.
-       *)
-    - now apply inGetTribeForkIn with t0 .
-    (* découpage en 3 morceaux à i, puis trois morceaux à j *)
-    Admitted.
-  (* Qed. *)
+	    induction Htc; subst.
+	    - unfold getTribe.
+	      assert(ownerf s p == t0) as Hown by now apply ownsOwnerRev.
+	      rewrite Hown.
+	      constructor 2.
+	      apply fold_left_in_seed_gen.
+	      apply in_flat_map.
+	      exists (t0, Fork t').
+	      split.
+	      + eapply range_fork_in_getSection; eauto.
+	      + unfold getTribeChild; simpl.
+	        rewrite Nat.eqb_refl.
+	        simpl; auto.
+	    - eapply inGetTribeForkIn with (t:=t0); eauto.
+	      intro Howns.
+	      inversion Hwf; subst.
+	      eapply tribeChildren_notOwner; eauto.
+	  Qed.
       
   Lemma tribe_getTribe :
     forall s p t,
@@ -1649,6 +1883,76 @@ Qed.
       rewrite Hown.
       simpl. left. trivial.
     - now apply tribeChildren_getTribe.
+  Qed.
+
+  Lemma fold_left_getTribe_tribeChildren :
+    forall whole scan p seed t,
+      (forall t, In t seed -> tribeChildren whole p t) ->
+      (forall parent child, In (parent, Fork child) scan -> father whole child parent) ->
+      In t
+         (fold_left
+            (fun (trb : list threadId) (e : Event.t) =>
+               getTribeChild trb e ++ trb) scan seed) ->
+      tribeChildren whole p t.
+  Proof.
+    induction scan as [|[tid a] scan IH]; intros p seed t0 Hseed Hfather Hin.
+    - simpl in Hin.
+      now apply Hseed.
+    - simpl in Hin.
+      apply IH with (seed:=getTribeChild seed (tid, a) ++ seed).
+      + intros child Hin_child.
+        apply in_app_or in Hin_child.
+        destruct Hin_child as [Hin_new | Hin_old].
+        * destruct a; simpl in Hin_new; try contradiction.
+          apply getTribeChild_fork_in in Hin_new.
+          destruct Hin_new as [Hchild Hin_parent].
+          subst.
+          constructor 2 with tid.
+          -- now apply Hseed.
+          -- apply Hfather.
+             left; reflexivity.
+        * now apply Hseed.
+      + intros parent child Hin_father.
+        apply Hfather.
+        right; assumption.
+      + exact Hin.
+  Qed.
+
+  Lemma getTribe_tribe :
+    forall s p t,
+      wellFormed s ->
+      In t (getTribe s p) ->
+      tribe s p t.
+  Proof.
+    intros s p t0 Hwf Hin.
+    unfold getTribe in Hin.
+    destruct (ownerf s p) as [owner|] eqn:Howner.
+    - simpl in Hin.
+      destruct Hin as [Howner_t | Hin].
+      + subst.
+        left.
+        now apply ownerf_owns with (p:=p).
+      + right.
+        eapply fold_left_getTribe_tribeChildren with
+          (scan:=s)
+          (seed:=flat_map (getTribeChild [owner]) (getSection s p)); eauto.
+        * intros child Hin_child.
+          apply in_flat_map in Hin_child.
+          destruct Hin_child as [[tid a] [Hin_section Hin_child]].
+          destruct a; simpl in Hin_child; try contradiction.
+          apply getTribeChild_fork_in in Hin_child.
+          destruct Hin_child as [Hchild Hin_owner].
+          subst.
+          simpl in Hin_owner.
+          destruct Hin_owner as [Htid_owner | Hnil]; [subst | contradiction].
+          eapply getSection_fork_tribeChildren; eauto.
+	        * intros parent child Hin_fork.
+	          destruct (in_exists_nth_error _ _ _ Hin_fork) as [i Hi].
+	          exists i.
+	          split.
+	          -- exact (f_equal (lift (@fst threadId action)) Hi).
+	          -- exact (f_equal (lift (@snd threadId action)) Hi).
+    - inversion Hin.
   Qed.
 
 
@@ -1704,52 +2008,39 @@ Qed.
       exclude s p t ->
       In  p (excludeList s t).
   Proof.
-    induction s using tr_ind.
-    - intros t0 p Hwf Hexcl.
-      contradict Hexcl.
-      apply exclude_nil.
-    - intros t p Hwf Hexcl.
-      destruct e as [t' a].
-      destruct (open_action_dec a) as [Ha | Ha].
-      + destruct Ha as [p' Hop]. subst.
-        destruct (Perm.eq_dec p p') as [Hpp' | Hpp'].
-        * subst.
-          admit. (*p' necesseraiment pending car en derniere position, t<>t' ou pas*)
-        * assert (exclude s p t) as Hexcls.
-          apply exclude_se_s_not_open_p with p' t';auto.  
-          admit. (*?*)
-      + assert (exclude s p t) as Hexcls.
-        apply exclude_se___s_not_open with t' a;auto.
-(*
-        assert (wellFormed s) as Hwfs by now apply wellFormed_se_s with (t',a).
-        assert (In p (excludeList s t)) as Hin by now apply IHs.
- *)      
+    intros s t0 p Hwf [Hpending Hnot_tribe].
+    unfold excludeList.
+    apply filter_In.
+    split.
+    - now apply pendingInList.
+    - apply negb_true_iff.
+      apply not_true_iff_false.
+      intro Hmem.
+      apply inMemEq in Hmem.
+      apply Hnot_tribe.
+      now apply getTribe_tribe.
+  Qed.
 
-        admit.
-  (* Qed. *)
-  Admitted.
+	  Lemma nthExcludeList :
+	    forall s t p i,
+	       nth_error (excludeList s t) i == p ->
+	       exists i' , action_of( pi i' s)== (Open p).
+	  Proof.
+	    intros s t p i Hnth.
+	    assert (In p (excludeList s t)) as Hin_exclude.
+	    {
+	      eapply nth_errorIn; eassumption.
+	    }
+	    unfold excludeList in Hin_exclude.
+	    apply filter_In in Hin_exclude.
+	    destruct Hin_exclude as [Hin_pending _].
+	    apply pendingIs2 in Hin_pending.
+	    unfold pending in Hin_pending.
+	    destruct Hin_pending as [[i' Hrange] _].
+	    inversion Hrange; subst; eauto.
+	  Qed.
 
-  Lemma nthExcludeList :
-    forall s t p i,
-       nth_error (excludeList s t) i == p ->
-       exists i' , action_of( pi i' s)== (Open p). 
-  Proof.
-    admit.
-Admitted.
-
-(*
-  Lemma orderFilter :
-    forall (A:Type) (l1 l2 : list A) f a b i j,
-      List.filter f l1 = l2 ->
-      nth_error l2 i == a ->
-      nth_error l2 j == b ->
-      i < j ->
-      exists i' j', 
-        nth_error l1 i' == a /\ nth_error l1 j' == b /\ i'<j'.
-  Proof.
-    admit.
-*)
-  Lemma orderExcludeList :
+	  Lemma orderExcludeList :
     forall s t p p' i j,
       wellFormed s ->
       nth_error (excludeList s t) i == p ->
@@ -1758,16 +2049,15 @@ Admitted.
       exists i' j', action_of( pi i' s)== (Open p) /\  action_of( pi j' s)== (Open p') /\ i'<j'.
   Proof.
     intros s t0 p p' i j Hwf Hi Hj Hlt.
-    destruct (nthExcludeList s t0 p i) as [i' Hi'];auto.
-    destruct (nthExcludeList s t0 p' j) as [j' Hj'];auto.
-    exists i'. exists  j'.
-    split;auto.
-    split;auto.
-    unfold excludeList in *.
-    unfold pendingList in *.
-    unfold opened in *.
-    admit.
-Admitted.
+    unfold excludeList in Hi, Hj.
+    destruct (nth_error_filter_order _ _ (pendingList s) i j p p' Hi Hj Hlt)
+      as [i_pending [j_pending [Hi_pending [Hj_pending Hpending_lt]]]].
+    unfold pendingList in Hi_pending, Hj_pending.
+	    destruct (nth_error_filter_order _ _ (opened s) i_pending j_pending p p'
+	                                     Hi_pending Hj_pending Hpending_lt)
+	      as [i_open [j_open [Hi_open [Hj_open Hopen_lt]]]].
+    now apply nth_opened_order with i_open j_open.
+  Qed.
 
 
    Lemma  outerExcludefIsOuter :

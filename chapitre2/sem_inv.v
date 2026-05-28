@@ -240,10 +240,10 @@ end.
     apply H14.
     apply in_or_app.
     left; eapply nth_some; eauto.
-    omega.
+    lia.
     rewrite H10 in H.
     discriminate.
-    omega.
+    lia.
     destruct H; auto.
     subst.
     assert (wf1 (m, i, c, v_list ++ Loc o' :: s, rho,sigma)) by (apply H0; auto); clear H0.
@@ -338,7 +338,7 @@ end.
     inv T0.
     split.
     intros fr; simpl; intros.
-    destruct H; try (elim H; false); subst.
+    destruct H; try (elim H; contradiction); subst.
     assert (wf1 (m, i, c, Loc o' :: s, rho, sigma')) by auto with datatypes.
     inv H; constructor; auto.
     intros.

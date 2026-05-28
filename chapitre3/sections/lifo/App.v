@@ -1,4 +1,4 @@
-Require Import Coq.Lists.List.
+From Stdlib Require Import Lists.List.
 Require Import AlgebraClasses.
 (* Require Import LIFO.List.Firstn_skipn. *)
 
@@ -52,9 +52,11 @@ Qed.
 (** [nil] is neutral for append  *)
 Global Program Instance nil_is_app_unit A : Neutral (eqA:=eq) (app (A:=A)) nil.
 Next Obligation.
-Admitted.
+  constructor; reflexivity.
+Qed.
 Next Obligation.
-Admitted.
+  constructor; apply app_nil_r.
+Qed.
 (* Solve Obligations using (constructor;  auto using app_nil_r).  *)
 
 (* (* this lemma causes a circular dependency with firstn_skipn *)
@@ -81,4 +83,4 @@ Proof.
 Qed.
 *)
 
-Hint Rewrite app_length :length.
+Hint Rewrite length_app :length.

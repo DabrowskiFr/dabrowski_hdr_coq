@@ -1,8 +1,9 @@
-Require Import Program Vector.
+From Stdlib Require Import Program.
+Require Import Vector.
 Require Import VectorTheory.
 Require Import Syntax.
 Require Import Semantics SemanticsTheory.
-Require Import Coq.Relations.Operators_Properties.
+From Stdlib Require Import Relations.Operators_Properties.
 
 Module Alignment (Import P : Process) (Import V : Vector P).
 

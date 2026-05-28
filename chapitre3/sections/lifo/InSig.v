@@ -1,10 +1,10 @@
-Require Import List.
-Require Import Arith.
+From Stdlib Require Import List.
+From Stdlib Require Import Arith.
 Require Import sections.lifo.Misc.
 Require Import sections.lifo.Length.
 Require Import sections.lifo.BoundedNat.
 Require Import sections.lifo.ProofEquality.
-Require Import Lia.
+From Stdlib Require Import Lia.
 Set Implicit Arguments.
 
 (** [inSig] builds, from a list of elements with type [A] and a proof
@@ -96,13 +96,12 @@ in some particular cases *)
 Lemma inInSig1 : forall (m:nat) l (P:= fun x => x < m) (a : nat) (H : P a) H2,
   In a l -> In (exist (fun x => P x) a H) (inSig P l H2).
 Proof.
-Admitted.
-(* induction l ; intros.
+  induction l ; intros.
  destruct H0.
  simpl. destruct H0.
- left. apply projT1BoundedNatInjective. intuition.
+ left. apply proj1_sigBoundedNatInjective. intuition.
  right. apply IHl. apply H0.
-Qed. *)
+Qed.
 
 Lemma nthInSigPI : forall m l n d x (P:= fun x => x < m) H H1 H2, 
   nth n l d = x -> nth n (inSig P l H) (exist P d H2) = exist P x H1.
@@ -125,14 +124,12 @@ Proof irrelevance for insig and boundednat
 *)
 Lemma inSigPI : forall m l1 (P := fun x => x < m) H1 H2, inSig P l1 H1 = inSig P l1 H2.
 Proof.
-Admitted.
-(* induction l1 ; intros.
-simpl. reflexivity.
-simpl. assert (inSig P l1 (inSig_obligation_2 P H1 (@eq_refl _ (a :: l1))) = inSig P l1 (inSig_obligation_2 P H2 (@eq_refl _ (a::l1)))).
-apply IHl1. rewrite H. 
-replace (H2 a (or_introl (In a l1) (eq_refl a))) with (H1 a (or_introl (In a l1) (eq_refl a)))  by (apply ltUniquenessProof).
-reflexivity.
-Qed. *)
+  induction l1 ; intros; simpl.
+  - reflexivity.
+  - f_equal.
+    + apply proj1_sigBoundedNatInjective; reflexivity.
+    + apply IHl1.
+Qed.
 
 
 (*
@@ -140,21 +137,12 @@ Concatenation of two boundednat list (with inSig)
 *)
 Lemma inSig_app : forall m (P := fun x => x < m) l1 l2 H1 H2 H3, inSig P l1 H1 ++ inSig P l2 H2 = inSig P (l1 ++ l2) H3.
 Proof.
-Admitted.
-
-(* induction l1 ; intros. simpl. simpl in *.
-apply inSigPI.
-simpl. replace ((H1 a (or_introl (In a l1) (eq_refl a)))) with ((H3 a (or_introl (In a (l1 ++ l2)) (eq_refl a)))). 
-2 : apply ltUniquenessProof. assert (H4 :forall a : nat, In a (l1 ++ l2) -> P a). intuition.
-apply H3. simpl. right. trivial. 
-assert (H5 : forall a : nat, In a l1 -> P a). intuition. 
-assert (H6 : forall a : nat, In a l2 -> P a) by intuition.
-replace (inSig P l1 (inSig_obligation_2 P H1 (eq_refl (a :: l1)))) with (inSig P l1 H5).
-2 : apply inSigPI. rewrite (IHl1 l2 H5 H2 H4).
-assert (inSig P (l1 ++ l2) H4 = inSig P (l1 ++ l2) (inSig_obligation_2 P H3 (eq_refl _))).
- apply inSigPI.
-rewrite H. reflexivity.
-Qed. *)
+  induction l1 ; intros; simpl.
+  - apply inSigPI.
+  - f_equal.
+    + apply proj1_sigBoundedNatInjective; reflexivity.
+    + apply IHl1.
+Qed.
 
 
 (*

@@ -1,4 +1,4 @@
-Require Import List Arith Relation_Operators.
+From Stdlib Require Import List Arith Relation_Operators.
 Require Import sections.lifo.Prelude.
 Require Import sections.common.GenericTrace.
 Require Import sections.common.Type_. 

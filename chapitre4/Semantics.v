@@ -1,10 +1,10 @@
-Require Import Bool Nat List.
+From Stdlib Require Import Bool Nat List.
 Require Import Monad.
-Require Import Peano_dec.
-Require Import Relations.Relation_Operators.
+From Stdlib Require Import Peano_dec.
+From Stdlib Require Import Relations.Relation_Operators.
 Require Import Vector VectorTheory PVector PVectorTheory Syntax.
-Require Import Program.
-Require Import Utf8.
+From Stdlib Require Import Program.
+From Stdlib Require Import Utf8.
 
 Open Scope type_scope.
 

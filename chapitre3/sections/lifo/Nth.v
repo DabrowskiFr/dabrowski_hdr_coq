@@ -1,6 +1,6 @@
 (** * Facts about the nth element of a list *)
-Require Import List.
-Require Import Lia.
+From Stdlib Require Import List Arith.
+From Stdlib Require Import Lia.
 
 Set Implicit Arguments.
 Set Asymmetric Patterns.
@@ -14,14 +14,14 @@ Section ListNth.
       In a l -> 
       exists n,  n < length l /\ forall b, nth n l b = a.
   Proof.
-  Admitted.
-    (* induction l; intros Ha.
+    induction l; intros Ha.
     inversion Ha.
     destruct Ha as [Hb | Hc].
-    exists 0; firstorder using lt_O_Sn.
-    destruct (IHl Hc) as [n [Ha Hb]].
-    exists (S n); firstorder using lt_n_S.
-  Qed. *)
+    - subst.
+      exists 0; split; [simpl; lia|intro; reflexivity].
+    - destruct (IHl Hc) as [n [Ha Hb]].
+      exists (S n); split; [simpl; lia|intro; simpl; apply Hb].
+  Qed.
 
 
   (** Two lists [l1 l2] with same length are equal if for each [n] lesser than there length, [n]th element of [l1 ] is equal to [n]th  element of [l2] *)
@@ -31,25 +31,9 @@ Section ListNth.
     (forall n, n < length l1 -> nth n l1 d = nth n l2 d) ->
     l1 = l2.
   Proof.
-  Admitted.
-    (* induction l1; intros. 
-      destruct l2. 
-        reflexivity. 
-        simpl in H; discriminate.
-      destruct l2.
-        simpl in H; discriminate.
-        replace a with (nth 0 (a::l1) d) by firstorder.
-        replace a0 with (nth 0 (a0::l2) d) by firstorder.
-        rewrite H0 by (simpl; firstorder).
-        simpl; f_equal.
-        apply IHl1 with (d:=d).
-          (simpl in H; intuition).
-          (intros;
-            replace (nth n l1 d) with (nth (S n) (a::l1) d) by firstorder;
-              replace (nth n l2 d) with (nth (S n) (a0::l2) d) by firstorder;
-                apply H0).
-            simpl; firstorder.
-  Qed. *)
+    intros.
+    eapply nth_ext; eauto.
+  Qed.
 
   (** Two lists on a type with at least two different values are equals 
      if for all default value and for all position their [nth] elements 
@@ -102,7 +86,14 @@ Section ListNth.
    Lemma seqNthMap : forall (A B: Type) (l : list A) (f : nat-> B) (a : B) start n ,
      n < length l -> nth n (map f (seq start (length l))) a = f (start + n).
    Proof.
-   Admitted. 
+     intros A0 B0 l f a start n Hn.
+     rewrite (@nth_indep B0 (map f (seq start (length l))) n a (f start)).
+     - rewrite map_nth.
+       rewrite seq_nth by assumption.
+       reflexivity.
+     - rewrite length_map, length_seq.
+       assumption.
+   Qed.
    (* intros A0 B0 l ; induction (length l) ; intros.
    inversion H.
    simpl seq. simpl map.
@@ -135,13 +126,12 @@ Section ListNth.
   Definition nth'b: forall (n:nat) (l:list A),
     n < length l -> {a:A | forall d, nth n l d = a}.
   Proof.
-  Admitted.
-    (* intros.
-    destruct l. simpl in H. absurd (n<0). apply lt_n_O. assumption.
+    intros.
+    destruct l. simpl in H. lia.
     exists (nth n (a::l) a).
     intro.
     apply nth_indep. assumption.
-  Defined. *)
+  Defined.
 
   (** [n]th element of the list without default value as [n] is lesser than [length l] *)
   Definition nth' (n:nat) (l:list A) (pre: n<length l) :=
@@ -176,17 +166,18 @@ Lemma app_nth : forall (A : Type) (l l1 : list A) u b, (forall n, (n < length l 
   /\ (n < length l1 -> nth n l1 b = nth (n + length l) u b))  -> forall n, n < length (l++l1) -> 
   length (l ++ l1) = length u -> nth n (l ++ l1) b = nth n u b.
 Proof.
-Admitted.
-(* intros.
-
-(* destruct (le_lt_dec (length l) n). *)
-rewrite app_nth2 ; intuition. destruct (H (n - length l)).
-assert (plus_minus : forall a b, a >= b -> a - b + b = a).
-intros. lia.
-rewrite plus_minus in H3. apply H3.
-rewrite app_length in H0. intuition. intuition.
-rewrite app_nth1 ; intuition. destruct (H n) ; intuition.
-Qed. *)
+  intros A0 l l1 u b H n Hn Hlen.
+  destruct (le_lt_dec (length l) n) as [Hle | Hlt].
+  - rewrite app_nth2 by assumption.
+    destruct (H (n - length l)) as [_ Hright].
+    rewrite Nat.sub_add in Hright by assumption.
+    apply Hright.
+    rewrite length_app in Hn.
+    lia.
+  - rewrite app_nth1 by assumption.
+    destruct (H n) as [Hleft _].
+    apply Hleft; assumption.
+Qed.
 
 
 

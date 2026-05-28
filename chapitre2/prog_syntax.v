@@ -1,5 +1,5 @@
-Require Export ZArith.
-Require Export List.
+From Stdlib Require Export ZArith.
+From Stdlib Require Export List.
 Require Export axioms.
 Open Scope type_scope.
 
@@ -81,31 +81,31 @@ Definition run : method_signature :=
 
 Inductive cflow : method -> flow -> Prop :=
 | cflow_aconstnull : forall m i 
-  (H:m.(body)(i)=Some AConstNull), cflow m (i,S i)
+  (H:body m(i)=Some AConstNull), cflow m (i,S i)
 | cflow_new : forall m i cid
-  (H:m.(body)(i)=Some (New cid)), cflow m (i,S i)
+  (H:body m(i)=Some (New cid)), cflow m (i,S i)
 | cflow_aload : forall m i x 
-  (H:m.(body)(i)=Some (ALoad x)), cflow m (i,S i)
+  (H:body m(i)=Some (ALoad x)), cflow m (i,S i)
 | cflow_astore : forall m i x 
-  (H:m.(body)(i)=Some (AStore x)), cflow m (i,S i)
+  (H:body m(i)=Some (AStore x)), cflow m (i,S i)
 | cflow_getfield : forall m i f
-  (H:m.(body)(i)=Some (GetField f)), cflow m (i,S i)
+  (H:body m(i)=Some (GetField f)), cflow m (i,S i)
 | cflow_putfield : forall m i f
-  (H:m.(body)(i)=Some (PutField f)), cflow m (i,S i)
+  (H:body m(i)=Some (PutField f)), cflow m (i,S i)
 | cflow_ifndl : forall m i j 
-  (H:m.(body)(i)=Some (Ifnd j)), cflow m (i,S i)
+  (H:body m(i)=Some (Ifnd j)), cflow m (i,S i)
 | cflow_ifndr : forall m i j 
-  (H:m.(body)(i)=Some (Ifnd j)), cflow m (i,j)
+  (H:body m(i)=Some (Ifnd j)), cflow m (i,j)
 | cflow_goto : forall m i j
-  (H:m.(body)(i)=Some (Goto j)), cflow m (i,j)
+  (H:body m(i)=Some (Goto j)), cflow m (i,j)
 | cflow_invoke : forall m i sig
-  (H:m.(body)(i)=Some (InvokeVirtual sig)), cflow m (i,S i)
+  (H:body m(i)=Some (InvokeVirtual sig)), cflow m (i,S i)
 | cflow_start : forall m i 
-    (H:m.(body)(i)=Some Run), cflow m (i,S i)
+    (H:body m(i)=Some Run), cflow m (i,S i)
 | cflow_monitorenter : forall m i 
-  (H:m.(body)(i)=Some MonitorEnter), cflow m (i,S i)
+  (H:body m(i)=Some MonitorEnter), cflow m (i,S i)
 | cflow_exit : forall m i 
-  (H:m.(body)(i)=Some MonitorExit), cflow m (i,S i).
+  (H:body m(i)=Some MonitorExit), cflow m (i,S i).
 
 Inductive leads_to : nat -> nat -> list nat -> method -> Prop :=
 | leads_to1 : forall i j m 
@@ -118,7 +118,7 @@ Definition safe_loop (p:program) : Prop :=
   forall (cl:class) (m:method) (l:list nat) (i:line) (cid:classId),
     In cl p.(classes) ->
     In m cl.(methods) ->
-    (m.(body) i = Some (New cid)) ->
+    (body m i = Some (New cid)) ->
     (leads_to i i (i::l) m) ->
     exists k, exists ik, exists jk, 
       nth_error l k = value ik  /\ nth_error l (S k) = value jk /\ ((ik,jk) = 

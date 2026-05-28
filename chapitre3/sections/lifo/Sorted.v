@@ -1,11 +1,11 @@
-Require Import Coq.Lists.List.
-Require Import Arith.
-Require Import Coq.Sorting.PermutEq.
-Require Import Coq.Sorting.Sorting.
-Require Import Relation_Definitions.
-Require Import Coq.Sorting.Permutation.
-Require Import Setoid.
-Require Import Coq.Sorting.PermutSetoid.
+From Stdlib Require Import Lists.List.
+From Stdlib Require Import Arith.
+From Stdlib Require Import Sorting.PermutEq.
+From Stdlib Require Import Sorting.Sorting.
+From Stdlib Require Import Relations.Relation_Definitions.
+From Stdlib Require Import Sorting.Permutation.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Sorting.PermutSetoid.
 Require Import sections.lifo.InsertSorting.
 Require Import sections.lifo.InSig.
 Require Import sections.lifo.Nth.
@@ -70,7 +70,7 @@ destruct H1 as (a1, H2).
 destruct (in_split a1 l (H0 a1)) as [l1 [l2 Hl1l2]].
 rewrite Hl1l2. rewrite map_app. simpl.
 rewrite H2.
-intuition.
+intuition auto with *.
 Qed.
 
 End Bijectivity.
@@ -84,12 +84,12 @@ Lemma noDupInj : forall (A B : Type) l f (H: @injective A B f),
  NoDup l -> NoDup (map f l).
 Proof.
 intros.
-assert (length l = length (map f l)). rewrite map_length. reflexivity.
+assert (length l = length (map f l)). rewrite length_map. reflexivity.
 induction l.
  constructor.
  simpl map. inversion H0.
- constructor. intros SH. apply H4. apply inMapInj with B f ; intuition. 
- apply IHl. apply H5. intuition.
+ constructor. intros SH. apply H4. apply inMapInj with B f ; intuition auto with *. 
+ apply IHl. apply H5. intuition auto with *.
 Qed.
 
 (**
@@ -99,12 +99,12 @@ Lemma noDupFun : forall (A B : Type) l (f : A -> B),
  NoDup (map f l) -> NoDup l.
 Proof.
 intros.
-assert (length l = length (map f l)). rewrite map_length. reflexivity.
+assert (length l = length (map f l)). rewrite length_map. reflexivity.
 induction l.
  constructor.
  simpl map in *. inversion H.
  constructor. intros SH. apply H3. apply in_map. apply SH. 
- apply IHl. apply H4. intuition.
+ apply IHl. apply H4. intuition auto with *.
 Qed.
 
 (**
@@ -115,7 +115,7 @@ Proof.
 induction len.
  constructor.
  constructor. 
- intro H. apply inSeqLe in H. intuition.
+ intro H. apply inSeqLe in H. intuition auto with *.
  apply IHlen.
 Qed.
 
@@ -123,11 +123,11 @@ Lemma inMapNoDupEqual : forall (A B : Type) L (a : A*B) p, fst a = fst p ->
   NoDup (map (@fst A B) (p::L)) -> In a (p::L) -> a = p.
 Proof.
 induction L ; intros.
- simpl in *. destruct H1 ; intuition.
- apply IHL ; intuition. inversion H0.
- inversion H5. constructor. intuition. intuition.
- inversion H1. subst ; intuition. destruct H2. simpl in * ; subst.
- rewrite H in H0. inversion H0. destruct H4. intuition.
+ simpl in *. destruct H1 ; intuition auto with *.
+ apply IHL ; intuition auto with *. inversion H0.
+ inversion H5. constructor. intuition auto with *. intuition auto with *.
+ inversion H1. subst ; intuition auto with *. destruct H2. simpl in * ; subst.
+ rewrite H in H0. inversion H0. destruct H4. intuition auto with *.
  right. apply H2.
 Qed.
 
@@ -146,7 +146,7 @@ induction L ; intros.
    destruct H. subst.
    destruct (H2 a0) as (b, H7).
    generalize (H1 b). intros. inversion H0 ; subst. destruct H5.
-   destruct (nth_in_or_default n (map (@fst A B) L) (fst b)). rewrite H. intuition.
+   destruct (nth_in_or_default n (map (@fst A B) L) (fst b)). rewrite H. intuition auto with *.
    rewrite <- H in e. destruct H7. apply e.
    apply IHL. apply H.
    inversion H0 ; assumption.
@@ -233,11 +233,11 @@ Lemma permutation_nth_in : forall (A:Type) (eqA_dec : forall a b : A, {a=b} + {~
   Permutation l1 l2 -> forall n (c : A), l2 <> nil -> n < length l1 -> In (nth n l1 c) l2.
 Proof.
 induction l1 ; intros.
- destruct H0 ; apply Permutation_nil in H ; intuition.
+ destruct H0 ; apply Permutation_nil in H ; intuition auto with *.
  destruct l2.
   destruct H0 ; reflexivity.
-  apply Permutation_in with (a::l1) ; intuition.
-  apply nth_In ; intuition.
+  apply Permutation_in with (a::l1) ; intuition auto with *.
+  apply nth_In ; intuition auto with *.
 Qed.
 
 (**
@@ -249,7 +249,7 @@ Proof.
 intros.
 assert (H3 : surjective f). apply H.
 generalize (inMapSurj l H3 H1). intros H2. apply NoDup_Permutation.
- apply H0.  destruct H. apply noDupInj ; intuition. intuition.
+ apply H0.  destruct H. apply noDupInj ; intuition auto with *. intuition auto with *.
 Qed.
 
 
@@ -266,8 +266,8 @@ simpl in H0.
 apply Permutation_trans with (rev l1).
  apply Permutation_rev.
  apply Permutation_trans with (rev l2) ; [ | apply Permutation_sym ; apply Permutation_rev].
- replace (rev l1) with ((rev l1) ++ nil) by intuition.
- replace (rev l2) with ((rev l2) ++ nil) by intuition.
+ replace (rev l1) with ((rev l1) ++ nil) by intuition auto with *.
+ replace (rev l2) with ((rev l2) ++ nil) by intuition auto with *.
  apply Permutation_app_inv with a.
  assumption.
 Qed.
@@ -285,11 +285,11 @@ induction H1.
  destruct H3. apply Permutation_in with l'. apply Permutation_sym ; apply H1.
  apply H5.
  inversion H2.
- apply IHPermutation ; intuition.
+ apply IHPermutation ; intuition auto with *.
  constructor. intro H ; inversion H2 ; inversion H4 ; subst.
- destruct H ; intuition.
- apply H3 ; subst ; intuition.
- inversion H2 ; inversion H3 ; subst ; constructor ; intuition.
+ destruct H ; intuition auto with *.
+ apply H3 ; subst ; intuition auto with *.
+ inversion H2 ; inversion H3 ; subst ; constructor ; intuition auto with *.
  apply IHPermutation2. apply IHPermutation1. apply H2.
 Qed.
 
@@ -339,12 +339,12 @@ induction l1 ; intros l2 Hsort1 Hsort2 Hperm.
    rewrite e in *.
    rewrite (IHl1 l2). reflexivity.
     assumption. assumption. apply Permutation_cons_inv with a0.  assumption. 
-   assert (H10 : In a (a0 :: l2)). apply Permutation_in with (a::l1) ; intuition.
+   assert (H10 : In a (a0 :: l2)). apply Permutation_in with (a::l1) ; intuition auto with *.
    assert (H11 : In a l2).
-    inversion H10. destruct n ; symmetry ; apply H. intuition.
-   assert (H12 : In a0 (a :: l1)). apply Permutation_in with (a0::l2) ; intuition.
+    inversion H10. destruct n ; symmetry ; apply H. intuition auto with *.
+   assert (H12 : In a0 (a :: l1)). apply Permutation_in with (a0::l2) ; intuition auto with *.
    assert (H13 : In a0 l1).
-    inversion H12. destruct n ; apply H. intuition.
+    inversion H12. destruct n ; apply H. intuition auto with *.
    assert (leA0 a a0).
     apply sortedCons with A0 l1. apply leA0_trans. apply eqA0_dec. apply Hsort1. apply H13.
    assert (leA0 a0 a).
@@ -359,10 +359,10 @@ intros.
 induction l.
  inversion H0.
  destruct (eq_nat_dec a0 b).
-  eapply le_trans. inversion H. inversion H4. apply H6. intuition.
+  eapply Nat.le_trans. inversion H. inversion H4. apply H6. intuition auto with *.
   apply IHl. inversion H ; inversion H3 ; inversion H4 ; subst. constructor. assumption.
-  destruct l ; constructor ; inversion H8 ; subst ; eapply le_trans with a0 ; intuition.
-  inversion H0 ; intuition.
+  destruct l ; constructor ; inversion H8 ; subst ; eapply Nat.le_trans with a0 ; intuition auto with *.
+  inversion H0 ; intuition auto with *.
 Qed.
 
 (*
@@ -386,11 +386,11 @@ induction l1 ; intros.
 rewrite app_nil_l. assumption.
 constructor.
 apply IHl1. inversion H. assumption. assumption.
-intros. intuition.
+intros. intuition auto with *.
 inversion H.
-apply HdRel_app. intuition. destruct l2. constructor.
+apply HdRel_app. intuition auto with *. destruct l2. constructor.
 constructor. simpl in H1.
-generalize (H1 a) ; intros. subst. assert (a = a) by reflexivity. intuition.
+generalize (H1 a) ; intros. subst. assert (a = a) by reflexivity. intuition auto with *.
 Qed.
 
 
@@ -415,11 +415,11 @@ Definition eqnA (m:nat) (e1 e2 : (boundedNat m*A)): Prop :=
 Definition le_dec1 : forall n m, {n <= m} + {m <= n}.
 Proof.
 induction n.
-left. intuition.
-destruct m. right. intuition.
+left. intuition auto with *.
+destruct m. right. intuition auto with *.
 destruct (IHn m).
-left ; intuition.
-right ; intuition.
+left ; intuition auto with *.
+right ; intuition auto with *.
 Defined.
 
 Lemma lenADec:
@@ -430,7 +430,7 @@ Proof.
  destruct b as [nb b].
  set(H:=le_dec1 (proj1_sig na) (proj1_sig nb)).
  unfold lenA; simpl.
- intuition.
+ intuition auto with *.
 Defined.
 
 Lemma eqnADec :
@@ -441,14 +441,14 @@ Proof.
  destruct b as [nb b].
  set(H:=eq_nat_dec (proj1_sig na) (proj1_sig nb)).
  unfold eqnA; simpl.
- intuition.
+ intuition auto with *.
 Qed.
 
 Program Instance SortNatA (m:nat) :
   Sortable (@eqnA m) (@lenA m) (@eqnADec m) (@lenADec m).
 Next Obligation.
-  constructor; intuition.
-  unfold eqnA, Transitive. intros. eapply eq_trans ; intuition.
+  constructor; intuition auto with *.
+  unfold eqnA, Transitive. intros. eapply eq_trans ; intuition auto with *.
 Qed.
 Next Obligation.
 intros x.
@@ -457,15 +457,15 @@ Qed.
 Next Obligation.
 unfold transitive.
 intros x y z H1 H2.
-unfold lenA in *. intuition.
+unfold lenA in *. intuition auto with *.
 Qed.
 Next Obligation.
 unfold eqnA, lenA in *.
-intuition.
+intuition auto with *.
 Qed.
 Next Obligation.
 unfold eqnA, lenA in *.
-intuition.
+intuition auto with *.
 Qed.
 
 

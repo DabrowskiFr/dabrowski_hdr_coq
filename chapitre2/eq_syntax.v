@@ -99,8 +99,8 @@ Section pair_eq.
 
 End pair_eq.
 
-Implicit Arguments eq_pair [A B].
-Implicit Arguments eq_some [A].
+Arguments eq_pair {A B} _ _.
+Arguments eq_some {A} _ _.
 
 Definition in_list := In_dec eq_line.
 

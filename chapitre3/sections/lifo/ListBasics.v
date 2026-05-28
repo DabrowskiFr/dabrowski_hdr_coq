@@ -1,6 +1,6 @@
-Require Import Lt Peano_dec Compare_dec Relation_Operators.
-Require Import List.
-Require Import Lia.
+From Stdlib Require Import Arith Peano_dec Compare_dec Relations.Relation_Operators.
+From Stdlib Require Import List.
+From Stdlib Require Import Lia.
 Require Import sections.lifo.Length.
 
 (*************************************************************************)
@@ -87,11 +87,11 @@ Hint Resolve nth_error_pointwise_equality : nth_error.
 
 (** append *)
 
-Hint Resolve List.app_assoc List.app_length : append.
+Hint Resolve List.app_assoc List.length_app : append.
 Hint Rewrite -> List.app_assoc : append_left.
 Hint Rewrite <- List.app_assoc : append_right.
-Hint Rewrite -> List.app_length : append_down.
-Hint Rewrite <- List.app_length : append_up.
+Hint Rewrite -> List.length_app : append_down.
+Hint Rewrite <- List.length_app : append_up.
 
 Lemma append_nil_left_neutral :
   forall (A : Type) (l : list A),
@@ -220,13 +220,11 @@ Proof.
   intros A l1 l2 a k h_lt b.
   destruct (lt_dec k (length l1)).
   - now do 2 rewrite nth_error_append_left by intuition.
-  - do 2 rewrite nth_error_append_right by intuition.
-    destruct k.
-    + elim n; auto with *.
-    + admit. 
-      (* rewrite <- minus_Sn_m by lia.
-      reflexivity. *)
-Admitted.
+	  - do 2 rewrite nth_error_append_right by intuition.
+	    destruct (k - length l1) eqn:Hsub.
+	    + exfalso; lia.
+	    + reflexivity.
+	Qed.
 
 Arguments nth_error_append_cons_neq [A] _ _ _ _ _ _.
 
@@ -248,16 +246,15 @@ Hint Rewrite -> nth_error_append_cons_cons_eq1 : nth_error.
 Lemma nth_error_append_cons_cons_eq2 :
   forall (A : Type) (l1 l2 l3 : list A) a b,
     nth_error (l1 ++ a::l2 ++ b :: l3) (length l1 + length l2 + 1) = Some b.
-Proof.
-  intros A l1 l2 l3 a b.
-Admitted.
-  (* rewrite nth_error_append_right by intuition.
-  replace (length l1 + length l2 + 1 - length l1) with (length l2 + 1) by omega.
+  Proof.
+    intros A l1 l2 l3 a b.
+  rewrite nth_error_append_right by lia.
+  replace (length l1 + length l2 + 1 - length l1) with (length l2 + 1) by lia.
   replace (a::l2++b::l3) with ((a::l2)++b::l3) by reflexivity.
-  rewrite nth_error_append_right by (simpl; omega).
-  replace (length l2 + 1 - length (a:: l2)) with 0 by (simpl; omega).
+  rewrite nth_error_append_right by (simpl; lia).
+  replace (length l2 + 1 - length (a:: l2)) with 0 by (simpl; lia).
   reflexivity.
-Qed. *)
+Qed.
 
 Arguments nth_error_append_cons_cons_eq2 [A] _ _ _ _ _.
 
@@ -279,14 +276,13 @@ Proof.
   autorewrite with append_right.
   replace (l1++c::l2++b::l3) with ((l1++c::l2)++b::l3) by now autorewrite with append_right.
   replace (l1++c::l2++d::l3) with ((l1++c::l2)++d::l3) by now autorewrite with append_right.
- Admitted. 
-  (* replace (length l1 + length l2 + 1) with (length (l1 ++ c::l2)) 
-    in H0 by (autorewrite with length; simpl; intuition).
+  replace (length l1 + length l2 + 1) with (length (l1 ++ c::l2)) 
+    in H0 by (rewrite length_app; simpl; lia).
   replace (nth_error ((l1++c::l2)++b::l3) k)
   with (nth_error ((l1++c::l2)++d::l3) k). 
   reflexivity.
   eauto with nth_error.
-Qed. *)
+Qed.
 
 Arguments nth_error_append_cons_cons_neq [A] _ _ _ _ _ _ _ _ _ _.
 
@@ -349,17 +345,15 @@ Proof.
   destruct (split_around l1 k1 h_lt_k1_l1) as [a [l3 [l4 [h_size3 h_split2]]]].
   exists a, b, l3, l4, l2.
   split; [assumption |split].
-  - replace (length l3 + length l4 + 1) with (length l1).
-    congruence.
-    rewrite h_split2.
-    admit.
-    (* now replace (length (l3 ++ a :: l4)) with (length l3 + length l4 + 1) 
-    by (rewrite app_length; simpl; intuition). *)
+	  - replace (length l3 + length l4 + 1) with (length l1).
+	    congruence.
+	    rewrite h_split2.
+	    now rewrite length_app; simpl; lia.
   - rewrite h_split1.
     rewrite h_split2.
     now replace ((l3++a::l4)++b::l2) with (l3++a::l4++b::l2) 
       by (rewrite <- app_assoc; reflexivity).
- Admitted.
+Qed.
 
 (* In *)
 

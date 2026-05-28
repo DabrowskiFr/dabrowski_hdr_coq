@@ -1,4 +1,4 @@
-Require Import String List Arith Bool FMapList Structures.OrderedTypeEx Zdiv Zbool.
+From Stdlib Require Import String List Arith Bool FMapList Structures.OrderedTypeEx Zdiv Zbool.
 Import ListNotations.
 
 Require Import sections.lifo.InSig sections.lifo.Length.
@@ -96,17 +96,16 @@ Module Type TYPE
          (forall e, In e l-> P e) -> P (Ope op l)) ->
       forall e : t, P e.
   Proof.
-  Admitted.
-    (* intros P (*H*) H0 H1.
-    fix 1.
-    destruct e; try solve [ clear expr_ind; auto ].
+    intros P H0 H1.
+    fix IH 1.
+    destruct e; try solve [ clear IH; auto ].
     apply H1. intros e Hin.
-    induction l as [ | e' es' IH] using list_rect.
+    induction l as [ | e' es' IHl] using list_rect.
     - contradiction.
     - simpl in Hin. destruct Hin as [Heq | Hin].
-      +  symmetry in Heq; subst. apply expr_ind.
-      + apply IH. apply Hin.
-  Qed. *)
+      +  symmetry in Heq; subst. apply IH.
+      + apply IHl. apply Hin.
+  Qed.
   
 (*Coercion Const: Va.t >-> t.
   Definition intToExp (n : Z) : t :=  n.
@@ -135,17 +134,16 @@ Module Type TYPE
   
   Lemma eq_dec : forall (e e':t), { e = e' } + { ~ e = e' }.
   Proof.
-  Admitted.
-    (* fix 1. destruct e; intros e'.
+    fix IH 1. destruct e; intros e'.
 (*  - destruct e'; try solve [clear eq_dec0; right; discriminate].
       destruct(Va.eq_dec t0 t1) as [Heq | Hneq].
       + symmetry in Heq; subst; left; reflexivity.
       + right. intro H. inversion H. contradiction. *)
-    - destruct e'; try solve [clear eq_dec0; right; discriminate].
+    - destruct e'; try solve [clear IH; right; discriminate].
       destruct(eq_nat_dec n n0) as [Heq | Hneq].
       + symmetry in Heq; subst; left; reflexivity.
       + right. intro H. inversion H. contradiction.
-    - destruct e'; try solve [clear eq_dec0; right; discriminate].
+    - destruct e'; try solve [clear IH; right; discriminate].
       generalize l0; clear l0; induction l; intro l'.
       + destruct l'. 
         * { destruct(Op.eq_dec o o0) as [Heq | Hneq].
@@ -154,7 +152,7 @@ Module Type TYPE
         * right. intro. discriminate.
       + destruct l'. 
         * right. intro H. discriminate.
-        * { case_eq(eq_dec0 a t0); intros H _.
+        * { case_eq(IH a t0); intros H _.
             - case_eq(IHl l'); intros Hl _.
               + symmetry in H, Hl. subst.
                 left. inversion Hl; subst; reflexivity.
@@ -163,7 +161,7 @@ Module Type TYPE
                 symmetry in H0, H1. subst.
                 reflexivity.
             - right. intro H'. inversion H'. contradiction. }
-  Qed. *)
+  Qed.
 
 (*  
   (** ** Examples *)

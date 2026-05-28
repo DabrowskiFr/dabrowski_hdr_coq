@@ -5,7 +5,7 @@
 (** printing -> #&#x02192;# *)
 (** printing • #&#8226;# *)
 
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.Prelude.
 Require Import sections.common.GenericTrace.
 Require Import sections.traces.Trace.

@@ -335,12 +335,12 @@ induction s; destruct Os; simpl; intros.
 inv H; repeat constructor; auto.
 inv H.
 generalize (op_stack_abs_size _ _ _ _ H').
-rewrite app_length; simpl.
-intros; apply False_ind; omega.
+rewrite length_app; simpl.
+intros; apply False_ind; lia.
 inv H.
 generalize (op_stack_abs_size _ _ _ _ H').
-rewrite app_length; simpl.
-intros; apply False_ind; omega.
+rewrite length_app; simpl.
+intros; apply False_ind; lia.
 inv H.
 elim IHs with (1:=H'); intros.
 split; auto.
@@ -386,7 +386,7 @@ intros.
 unfold labstract_value in H0.
 destruct al as (A,F);
 destruct al' as (A',F');
-destruct l as [ _ | [a [m0 i0 c0 om0 pi0]]]; constructor;
+destruct l as [| [a [m0 i0 c0 om0 pi0]]]; constructor;
 destruct H0;
 inv H.
 auto.
@@ -1155,7 +1155,7 @@ Section Safety.
     (HCG : cg m c)
     (HDtyping : dynamic_typing ((CP m i c om pi,s,rho)::cs) M Frs)
     (HHeapAbs : heap_abs sigma Sigma)
-    (HInstr : m.(body) i = Some instr)
+    (HInstr : body m i = Some instr)
     (HStep : step0 l (m,i,c) instr (i,s,rho,sigma) (j,s',rho',sigma') e),
     dynamic_typing ((CP m j c om (incr_lVect pi m c (i,j)) ,s',rho')::cs) M Frs.
   Proof.
@@ -1265,7 +1265,7 @@ Section Safety.
     (HCG : cg m c)
     (HDtyping : dynamic_typing ((CP m i c om pi,s,rho)::cs) M Frs)
     (HHeapAbs : heap_abs sigma Sigma)
-    (HInstr : m.(body) i = Some instr)
+    (HInstr : body m i = Some instr)
     (HStep : step0 l (m,i,c) instr (i,s,rho,sigma) (j,s',rho',sigma') e),
     heap_abs sigma' Sigma.
   Proof.
@@ -1353,7 +1353,7 @@ Section Safety.
     destruct H22.
     destruct H23.
     split.
-    omega.
+    lia.
     
     intro.
     unfold labstract_lVect in H21.
@@ -1369,9 +1369,9 @@ Section Safety.
         destruct fl;
           destruct (eq_flow (i,next_line i) (l0,l1));
               (discriminate || eauto with arith).
-    apply H24 in H27; apply H25 in H28; omega.
-    apply H24 in H27; apply H25 in H28; omega.
-    apply H24 in H27; apply H25 in H28; omega.
+    apply H24 in H27; apply H25 in H28; lia.
+    apply H24 in H27; apply H25 in H28; lia.
+    apply H24 in H27; apply H25 in H28; lia.
 
     unfold heap_abs in HHeapAbs.
     generalize (write_diff o0 f (a,CP m0 i0 c0 om0 pi0) f0 sigma sigma' w v H1 HYP2 H).
@@ -2051,7 +2051,6 @@ unfold frame_abs.
 unfold line in *.
 case_eq (Frs (main p, 0, C.init_mcontext)).
 intros Os Gamma Ha.
-unfold main in.
 inv H.
 unfold main_cond in H5.
 destruct H5.
@@ -2139,5 +2138,3 @@ End TypeSafety.
 
 
   
-
-

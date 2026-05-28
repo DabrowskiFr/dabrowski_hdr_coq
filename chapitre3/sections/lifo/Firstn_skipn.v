@@ -1,6 +1,6 @@
-Require Import List.
-Require Import Arith.
-Require Import Lia.
+From Stdlib Require Import List.
+From Stdlib Require Import Arith.
+From Stdlib Require Import Lia.
 
 Require Import sections.lifo.Min.
 
@@ -10,8 +10,8 @@ Require Import sections.lifo.Length.
 Require Import sections.lifo.In.
 Require Import sections.lifo.App.
 Require Import sections.lifo.Notations.
-Require NArith.
-Require Import Coq.Numbers.BinNums.
+From Stdlib Require NArith.
+From Stdlib Require Import Numbers.BinNums.
 
 Section Cut.
 
@@ -39,14 +39,14 @@ Section Cut.
     forall {A:Type}(n:nat)(l:list A), 
       cut n l = Ncut (N.of_nat n) l.
   Proof.
-    admit.
+    todo.
   Qed.
 
   Lemma Ncutcut: 
     forall {A:Type}(n:N)(l:list A), 
       Ncut n l = cut (N.to_nat n) l.
   Proof.
-    admit.
+    todo.
   Qed.*)
 
   Lemma cutFirstNSkipN : 
@@ -115,17 +115,19 @@ Section firstnskipn.
   Lemma firstn_skipn_length: forall n (l: list A), 
     length (firstn n l) + length (skipn n l) = length l.
   Proof.
-    intros. rewrite <- app_length. rewrite firstn_skipn. reflexivity.
+    intros. rewrite <- length_app. rewrite firstn_skipn. reflexivity.
   Qed.
   
   (** length of [firstn n l] written with length of [l] *)
   Lemma firstn_length: forall (l: list A) (n: nat), 
     length (firstn n l) = min n (length l).
   Proof.
-  Admitted.
+    intros.
+    apply length_firstn.
+  Qed.
     (* intros.
     assert (length (firstn n l) = length l - length (skipn n l)).
-    apply plus_minus. rewrite plus_comm. symmetry. apply firstn_skipn_length.
+    apply Nat.sub_add. rewrite Nat.add_comm. symmetry. apply firstn_skipn_length.
     rewrite H. rewrite skipn_length.
     symmetry. rewrite min_comm. apply min_minus.
   Qed. *)
@@ -135,7 +137,7 @@ Section firstnskipn.
     forall (l: list A) (n: nat),
       n <= length l -> length (firstn n l) = n.
   Proof.
-    intros. rewrite firstn_length. apply min_l. assumption.
+    intros. rewrite length_firstn. apply min_l. assumption.
   Qed.
   
   (** compositions of [skipn]  *)
@@ -184,22 +186,25 @@ Section firstnskipn.
     forall (l:list A) (n:nat),
       firstn n (rev' l) = rev' (skipn (length l - n) l).
   Proof.
-  Admitted.
+    intros l n.
+    repeat rewrite rev'_rev.
+    apply firstn_rev.
+  Qed.
     (* intros.
     destruct l. simpl. apply firstn_nil.
     apply nthSameLengthEqual with (d:=a).
     rev'_to_rev.
-    rewrite rev_length.
+    rewrite length_rev.
     rewrite skipn_length.
-    rewrite firstn_length.
-    rewrite rev_length.
+    rewrite length_firstn.
+    rewrite length_rev.
     rewrite min_comm. apply min_minus.
 
     intros.
     rev'_to_rev.
     rev'_to_rev in H. 
-    rewrite firstn_length in H.
-    rewrite rev_length in H.
+    rewrite length_firstn in H.
+    rewrite length_rev in H.
     assert (n0 < n). apply lt_le_trans with (m:=min n (length (a::l))). assumption. apply le_min_l.
     assert (n0 < length (a::l)). apply lt_le_trans with (m:=min n (length (a::l))). assumption. apply le_min_r.
     repeat (rewrite firstn_nth || rewrite rev_nth || rewrite skipn_nth || rewrite skipn_length).
@@ -227,7 +232,7 @@ Section firstnskipn.
     destruct m. simpl. reflexivity.
     destruct n. simpl. rewrite Nat.add_0_r. 
     assert (length (skipn m (firstn m l)) = 0).
-    rewrite skipn_length. rewrite firstn_length.
+    rewrite skipn_length. rewrite length_firstn.
     simpl in pre. rewrite min_l. auto with arith. auto with arith.
     assert (forall (l: list A), length l = 0 -> l = nil).
     induction l0. simpl. reflexivity. simpl. intro H1. discriminate H1.
@@ -256,12 +261,11 @@ Section firstnskipn.
     forall (l: list A) (n : nat),
     firstn n (firstn n l) = firstn n l.
   Proof.
-  Admitted.
-    (* intros l n.
+    intros l n.
     rewrite  firstn_compose.
-    rewrite min_idempotent.
+    rewrite Nat.min_id.
     reflexivity.
-  Qed. *)
+  Qed.
   Hint Rewrite  firstn_compose' : firstn.
   Hint Resolve firstn_compose' :firstn.
 
@@ -282,14 +286,12 @@ Section firstnskipn.
     forall (l l':list A) (n:nat),
       n <= length l -> firstn n (l++l') = firstn n l.
   Proof.
-  Admitted.
-    (* induction l as [|a l IHl].
-    intros l' n H. destruct n. firstorder.
-    simpl in H. absurd (S n <= 0). firstorder. assumption.
-    destruct n.
-    intros H. simpl. reflexivity.
-    intros H. simpl. rewrite IHl. reflexivity. simpl in H. firstorder.
-  Qed. *)
+    intros l l' n H.
+    rewrite firstn_app.
+    replace (n - length l) with 0 by lia.
+    rewrite app_nil_r.
+    reflexivity.
+  Qed.
 
   (** [firstn] applied to [l++l'] is equal to  [l] if the length of [l] is  n  *)
   Lemma firstn_app_length:
@@ -308,14 +310,11 @@ Section firstnskipn.
     forall (l l':list A) (n:nat),
       n <= length l -> skipn n (l++l') = (skipn n l) ++ l'.
   Proof.
-  Admitted.
-    (* induction l as [|a l IHl].
-    intros l' n H. destruct n. firstorder.
-    simpl in H. absurd (S n <= 0). firstorder. assumption.
-    destruct n.
-    intros H. simpl. reflexivity.
-    intros H. simpl. rewrite IHl. reflexivity. simpl in H. firstorder.
-  Qed. *)
+    intros l l' n H.
+    rewrite skipn_app.
+    replace (n - length l) with 0 by lia.
+    reflexivity.
+  Qed.
 
 
   (** [firstn] applied to [l++l'] is equal to [l] append to first (n- length l) element of [l'] if the length of [l] is lesser than [n]  *)
@@ -323,27 +322,22 @@ Section firstnskipn.
     forall (l l':list A) (n:nat),
       n >= length l -> firstn n (l++l') = l ++ firstn (n-length l) l'.
   Proof.
-    induction l as [|a l IHl].
-    intros l' n H. simpl. 
-    rewrite Nat.sub_0_r. reflexivity.
-    intros. simpl.
-    destruct n.
-    simpl in H. absurd (0>=S(length l)). unfold ge. apply Nat.nle_succ_0. assumption.
-    simpl. f_equal. apply IHl. simpl in H. firstorder.
-  Admitted.
+    intros l l' n H.
+    rewrite firstn_app.
+    rewrite firstn_all2 by lia.
+    reflexivity.
+  Qed.
 
   (** [skipn] applied to [l++l'] is equal to skip [n - length l] element of [l'] if the length of [l] is lesser than [n]  *)
   Lemma skipn_app2:
     forall (l l':list A) (n:nat),
       n >= length l -> skipn n (l++l') = skipn (n-length l) l'.
   Proof.
-    induction l.
-    intros. simpl. rewrite Nat.sub_0_r. reflexivity.
-    intros. simpl.
-    destruct n.
-    simpl in H. absurd (0>=S(length l)). unfold ge. apply Nat.nle_succ_0. assumption.
-    simpl. apply IHl. simpl in H. firstorder.
-    Admitted.
+    intros l l' n H.
+    rewrite skipn_app.
+    rewrite skipn_all2 by lia.
+    reflexivity.
+  Qed.
 
   Lemma skipn_app_length:
     forall (l l':list A) (n:nat),
@@ -504,5 +498,5 @@ Proof.
   rewrite  skipn_app_length; reflexivity.
 Qed.
 Hint Resolve app_length_eq :app.
-Hint Rewrite firstn_length skipn_length : length.
+Hint Rewrite length_firstn skipn_length : length.
 Hint Rewrite  firstn_skipn_length firstn_length_l : length.

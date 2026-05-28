@@ -1,7 +1,7 @@
 Require Import Vector.
 Require Import VectorTheory.
 Require Import Monad.
-Require Import Utf8.
+From Stdlib Require Import Utf8.
 
 Local Open Scope monad_scope.
 

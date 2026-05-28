@@ -1,9 +1,9 @@
 Set Implicit Arguments.
 Generalizable All Variables.
 
-Require Import Structures.Equalities.
-Require Import Morphisms.
-Require Import SetoidList.
+From Stdlib Require Import Structures.Equalities.
+From Stdlib Require Import Morphisms.
+From Stdlib Require Import SetoidList.
 
 Open Scope signature_scope.
 

@@ -1,7 +1,7 @@
-Require Import Program.
-Require Export Coq.Classes.Init.
-Require Export Coq.Classes.RelationClasses.
-Require Import Setoid.
+From Stdlib Require Import Program.
+From Stdlib Require Export Classes.Init.
+From Stdlib Require Export Classes.RelationClasses.
+From Stdlib Require Import Setoid.
 Generalizable All Variables.
 
 (** *Type classes for abstract algebra concepts *)
@@ -375,7 +375,7 @@ Hint Extern 1 (CommutativeRing (flip _ ) _ _ _)=> apply @CommutativeRing_flip_le
 
 (* Section semiRingNat. *)
 
-Require Import Arith.
+From Stdlib Require Import Arith Lia.
 
 (**  0 is neutral for addition in nat *)
 Program Instance plus_neutral : Neutral plus 0.
@@ -389,7 +389,7 @@ Qed.
 (**  addition in nat is commutative *)
 Program Instance commutative_plus :  Commutative plus.
 Next Obligation.
-  auto with arith.
+  apply Nat.add_comm.
 Qed.
 
 (**  addition in nat is associative *)
@@ -419,11 +419,11 @@ Qed.
 (**  multiplication in nat is associative *)
 Program Instance commutative_mult : Commutative mult.
 Next Obligation.
-  auto with arith.
+  apply Nat.mul_comm.
 Qed.
 Next Obligation.
-  auto with arith.
-  Admitted.
+  constructor; intros; apply Nat.mul_1_r.
+Qed.
   
 (**  nat with multiplication is a Commutative Monoid *)
 Program Instance commutativeMonoid_mult : CommutativeMonoid mult 1.
@@ -435,8 +435,8 @@ Qed.
 (**  multiplication is distributive over addition in nat *)
 Program Instance distributive_mult_plus : Distributivity mult plus.
 Next Obligation.
-  auto with arith.
-Admitted.
+  nia.
+Qed.
 Next Obligation.
   repeat rewrite (commutative (op:=mult) x).
   auto with arith.
@@ -452,7 +452,7 @@ Program Instance SemiRing_nat : SemiRing plus mult 0 1.
 (** *Z is a ring*)
 (* Section anneauZ. *)
 
-Require Import ZArith.
+From Stdlib Require Import ZArith.
 Open Scope Z_scope.
 
 (**  0 is neutral for addition in Z *)
@@ -479,7 +479,8 @@ Qed.
 (**  Z with addition is a group *)
 Program Instance group_Zplus : Group (eqA:=eq) Zplus 0.
 Next Obligation.
-Admitted.
+  exists (- x); split; lia.
+Qed.
 
 (* Solve Obligations  using (typeclasses eauto || intro x;exists (-x); auto with zarith ). *)
 
@@ -522,7 +523,7 @@ Close Scope Z_scope.
 (* End anneauZ. *)
 
 (* Section semiAnneauBool. *)
-Require Import Bool.
+From Stdlib Require Import Bool.
 Open Scope bool_scope.
 
 Program Instance orb_neutral : Neutral orb false. 
@@ -576,22 +577,27 @@ Qed.
 
 Program Instance distributive_andb_orb : Distributivity andb orb.
 Next Obligation.
-Admitted.
+  destruct x, y, z; reflexivity.
+Qed.
 Next Obligation.
-Admitted.
+  destruct x, y, z; reflexivity.
+Qed.
 (* Solve Obligations  using (intros x y z; case x; case y ;  case z ; unfold orb; reflexivity). *)
 
 Program Instance distributive_orb_andb : Distributivity orb andb.
 
 Next Obligation.
-Admitted.
+  destruct x, y, z; reflexivity.
+Qed.
 Next Obligation.
-Admitted.
+  destruct x, y, z; reflexivity.
+Qed.
 (* Solve Obligations  using (intros x y z; case x; case y ;  case z ; auto with bool). *)
 
 Program Instance SemiRing_bool : SemiRing andb orb true false.
 Next Obligation.
-Admitted.
+  destruct a; split; reflexivity.
+Qed.
 (* Solve Obligations  using (typeclasses eauto || intro a; case a; split; auto). *)
 
 Close Scope bool_scope.
@@ -601,74 +607,89 @@ Module semiAnneauProp.
   
   Program Instance or_neutral : Neutral or False.
   Next Obligation.
-Admitted.
+  constructor; tauto.
+Qed.
 Next Obligation.
-Admitted.
+  constructor; tauto.
+Qed.
   (* Solve Obligations  using (constructor; tauto). *)
   
   Program Instance or_commutative :  Commutative or.
   Next Obligation.
-Admitted.
+  tauto.
+Qed.
   (* Solve Obligations  using (tauto). *)
 
   Program Instance or_associative :  Associative  or.
   Next Obligation.
-Admitted.
+  tauto.
+Qed.
   (* Solve Obligations  using (tauto). *)
 
   Program Instance commutative_monoid_or : CommutativeMonoid or False.
   Next Obligation.
-Admitted.
+  constructor; typeclasses eauto.
+Qed.
   (* Solve Obligations  using (constructor; typeclasses eauto). *)
   (* Solve Obligations  using (typeclasses eauto). *)
 
   Program Instance and_neutral : Neutral and True.
   Next Obligation.
-Admitted.
+  constructor; tauto.
+Qed.
 Next Obligation.
-Admitted.
+  constructor; tauto.
+Qed.
   (* Solve Obligations  using (constructor;tauto). *)
 
   Program Instance and_commutative :  Commutative and.
   Next Obligation.
-  Admitted.
+  tauto.
+Qed.
   (* Solve Obligations  using (tauto). *)
 
   Program Instance and_associative :  Associative  and.
   Next Obligation.
-Admitted.
+  tauto.
+Qed.
   (* Solve Obligations  using (tauto). *)
 
   Program Instance commutative_monoid_and : CommutativeMonoid and True.
   Next Obligation.
-Admitted.
+  constructor; typeclasses eauto.
+Qed.
   (* Solve Obligations  using (constructor; typeclasses eauto). *)
 
 
   Program Instance distributive_and_or : Distributivity and or.
   Next Obligation.
-Admitted.
+  tauto.
+Qed.
 Next Obligation.
-Admitted.
+  tauto.
+Qed.
   (* Solve Obligations  using (tauto).  *)
 
   Program Instance distributive_or_and : Distributivity or and.
   Next Obligation.
-Admitted.
+  tauto.
+Qed.
 Next Obligation.
-Admitted.
+  tauto.
+Qed.
   (* Solve Obligations  using (tauto).  *)
 
   Program Instance SemiRing_prop : SemiRing and or True False.
   Next Obligation.
-  Admitted.
+  tauto.
+Qed.
   (* Solve Obligations  using (typeclasses eauto || tauto). *)
 
 End semiAnneauProp.
 
 
 (* Section FieldQ. *)
-Require Import QArith. 
+From Stdlib Require Import QArith. 
 Open Scope Q_scope.
 
 Program Instance Q_neutral : Neutral (eqA:=Qeq) Qplus 0.
@@ -686,7 +707,8 @@ Qed.
 
 Program Instance Qplus_associative :  Associative  Qplus.
 Next Obligation.
-Admitted.
+  symmetry; apply Qplus_assoc.
+Qed.
 (* Solve Obligations  using (intros;symmetry;apply Qplus_assoc). *)
 
 Program Instance group_Qplus : Group Qplus 0. 
@@ -702,24 +724,30 @@ Program Instance commutativeGroup_Qplus : CommutativeGroup Qplus 0.
 
 Program Instance Qmult_neutral : Neutral Qmult 1.
 Next Obligation.
-Admitted.
+  constructor; apply Qmult_1_l.
+Qed.
 Next Obligation.
-Admitted.
+  constructor; apply Qmult_1_r.
+Qed.
 (* Solve Obligations  using (constructor ; (apply Qmult_1_r||apply Qmult_1_l)). *)
 
 Program Instance Qmult_commutative :  Commutative Qmult.
 Next Obligation.
-Admitted.
+  apply Qmult_comm.
+Qed.
 (* Solve Obligations  using (apply Qmult_comm). *)
 
 Program Instance Qmult_associative :  Associative  Qmult.
 Next Obligation.
-Admitted.
+  symmetry; apply Qmult_assoc.
+Qed.
 (* Solve Obligations  using (symmetry; apply Qmult_assoc). *)
 
 Program Instance multiplicativeGroup_Qmult : MultiplicativeGroup Qmult 1 0.
 Next Obligation.
-Admitted.
+  exists (/ x).
+  apply Qmult_inv_r.
+Qed.
 (* Solve Obligations  using (typeclasses eauto|| idtac). *)
 (* Next Obligation.
   exists (/x).

@@ -1,4 +1,4 @@
-Require Export FSets.
+From Stdlib Require Export FSets.
 Require Export sem_inv.
 
 Module MakeMustLock (S:SEMANTIC).
@@ -200,7 +200,7 @@ Section MustLock.
     inv H; constructor.
     eapply gamma_exp'_monotone_cons; eauto.
   Qed.
-  Hint Resolve gamma_list_monotone_cons gamma_exp'_monotone_cons gamma_expr_monotone_cons.
+  Hint Resolve gamma_list_monotone_cons gamma_exp'_monotone_cons gamma_expr_monotone_cons : core.
 
   Lemma gamma_list_length : forall S1 l sigma s,
     gamma_list l sigma S1 s -> length S1 = length s.
@@ -531,7 +531,7 @@ Section MustLock.
     inv T; auto.
     eapply H; eauto.
   Qed.
-  Hint Resolve gamma_thread_upd.
+  Hint Resolve gamma_thread_upd : core.
 
   Lemma gamma_cs_monotone_cons : forall o mu ls cs,
     gamma_cs o mu ls cs -> forall sigma, gamma_cs o mu (sigma::ls) cs.
@@ -546,7 +546,7 @@ Section MustLock.
     repeat intro.
     apply gamma_cs_monotone_cons; eauto.
   Qed.
-  Hint Resolve gamma_thread_monotone_cons.
+  Hint Resolve gamma_thread_monotone_cons : core.
 
   Lemma step3_correct : forall cg L o cs sigma mu L' sigma' mu' a ls,
     MustLock cg ->
@@ -729,8 +729,8 @@ Section MustLock.
     intros cg L sigma mu L' sigma' mu' a ls Hp Hr HPT Hi Hrho Hi1 Hi2 Hs Ht.
     inv Hs.
     eapply step3_correct with (8:=H6); eauto.
-    intros; eapply (Hi1 o); eauto.
-    intros; eapply Hi; try congruence.
+    intros z Hz HzL.
+    eapply Hi; [rewrite H7; discriminate | exact Hz | exact HzL].
   Qed.
 
 End MustLock.
@@ -986,4 +986,3 @@ Definition SafePtL (p:program) (PtL:mcontext->method->line->var->pcontext->Prop)
 
 
 End MakeMustLock.
-

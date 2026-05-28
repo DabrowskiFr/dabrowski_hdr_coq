@@ -91,7 +91,7 @@ Module MakePointsToRace (S:SEMANTIC).
     | reaches0 : reaches None init_mcontext p.(main)
     | reaches1 : forall t t' c m P S cid m' i,
       reaches t c m ->
-      m.(body) i = Some Run ->
+      body m i = Some Run ->
       PT.(ptS) c m i = P::S ->
       P t' ->
       get_class p t' = Some cid ->
@@ -99,7 +99,7 @@ Module MakePointsToRace (S:SEMANTIC).
       reaches (Some t') (make_call_context m i c t') m'
     | reaches2 : forall t c m i ms ARGS P S m' cid o,
       reaches t c m ->
-      m.(body) i = Some (InvokeVirtual ms) ->
+      body m i = Some (InvokeVirtual ms) ->
       PT.(ptS) c m i = ARGS++P::S ->
       length ARGS = length ms.(args) ->
       P o ->
@@ -127,7 +127,8 @@ Module MakePointsToRace (S:SEMANTIC).
       destruct eq_memloc'; subst.
       inv H; destruct H0; try (intuition; fail).
       inv H; simpl; constructor 1.
-      discriminate.
+      inversion H.
+      discriminate H.
       (**)
       destruct st as [[L sigma]mu].
       destruct st' as [[L' sigma']mu'].
@@ -375,8 +376,6 @@ Module MakePointsToRace (S:SEMANTIC).
 End reaches.
 
 End MakePointsToRace.
-
-
 
 
 

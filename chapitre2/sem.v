@@ -138,11 +138,11 @@ Module Type SEMANTIC.
     Inductive step1 :
       memory_location' -> (frame*heap) -> (frame*heap) -> action -> Prop :=
     | step1_ctx : forall e c i i' instr m o rho rho' s s' sigma sigma'  
-      (HYP1 : m.(body) i = Some instr)
+      (HYP1 : body m i = Some instr)
       (HYP2: step0 o (m,i,c) instr (i,s,rho,sigma) (i',s',rho',sigma') e),
       step1 o (m,i,c,s,rho,sigma) (m,i',c,s',rho',sigma') e
     | step1_new : forall a c cid i m o rho s sigma sigma'
-      (HYP1 : m.(body) i = Some (New cid))
+      (HYP1 : body m i = Some (New cid))
       (HYP2 : fresh sigma a)
       (HYP5 : alloc sigma (a,make_new_context m i cid c) sigma'),
       step1 o (m,i,c,s,rho,sigma) (m,next_line i,c,(Loc (a,make_new_context m i cid c))::s,rho,sigma') None.
@@ -152,7 +152,7 @@ Module Type SEMANTIC.
       (H:step1 o (fr,sigma) (fr',sigma') e), 
       step2 o (fr::cs,sigma) (fr'::cs,sigma') e
     | step2_invoke : forall m i mid args rtype s v_list rho1 m1 c1 c rho cs' sigma o cid o'
-      (H0 : m.(body) i = Some (InvokeVirtual (MethSign mid args rtype)))
+      (H0 : body m i = Some (InvokeVirtual (MethSign mid args rtype)))
       (H1 : get_class p (snd o') = Some cid)
       (H2 : lookup p (MethSign mid args rtype) cid = Some m1)
       (H3 : c1 = make_call_context m i c (snd o'))
@@ -165,10 +165,10 @@ Module Type SEMANTIC.
               ((m1,0,c1,nil,rho1)::(m,S i,c,s,rho)::cs',sigma) None
     | step2_return :
       forall o m i c s rho cs sigma 
-        (H:m.(body) i = Some Return),
+        (H:body m i = Some Return),
         step2 o ((m,i,c,s,rho)::cs,sigma) (cs,sigma) None
     | step2_areturn : forall o m i c  v s rho s' rho' cs sigma m' i' c'
-      (H:m.(body) i = Some AReturn),
+      (H:body m i = Some AReturn),
       step2 o ((m,i,c,v::s,rho)::(m',i',c',s',rho')::cs,sigma) 
               ((m',i',c',v::s',rho')::cs,sigma) None.
     
@@ -178,7 +178,7 @@ Module Type SEMANTIC.
       (H:step2 o (cs,sigma) (cs',sigma') e),
       step3 L (o,cs,sigma,mu) (upd_thread L o cs',sigma',mu) e
     | step3_start : forall m i s m1 rho1 c1 L sigma lock c rho cs o o' cid
-      (H0 : m.(body) i = Some Run)
+      (H0 : body m i = Some Run)
       (H1 : get_class p (snd o') = Some cid)
       (H2 : lookup p run cid = Some m1)
       (H3 : c1 = make_call_context m i c (snd o'))
@@ -191,13 +191,13 @@ Module Type SEMANTIC.
         (fst o',Some (snd o')) ((m1,0,c1,nil,rho1)::nil),sigma,lock)
       None
     | step3_enter :forall L m i mu mu' o o' c s rho cs sigma
-      (H0 : m.(body) i = Some MonitorEnter)
+      (H0 : body m i = Some MonitorEnter)
       (H2 : acquire (fst o) (fst o') mu mu'),
       step3 L (o,(m,i,c,Loc o'::s,rho)::cs,sigma,mu)
               (upd_thread L o ((m,next_line i,c,s,rho)::cs),sigma,mu')
               None
     | step3_exit : forall L m i mu mu' o o' c s rho cs sigma 
-      (H0 : m.(body) i = Some MonitorExit)
+      (H0 : body m i = Some MonitorExit)
       (H2 : release (fst o) (fst o') mu mu'),
       step3 L (o,(m,i,c,Loc o'::s,rho)::cs,sigma,mu)
               (upd_thread L o ((m,next_line i,c,s,rho)::cs),sigma,mu')
@@ -403,11 +403,11 @@ Module MakeSemantic (CC:CONTEXT).
     Inductive step1 :
       memory_location' -> (frame*heap) -> (frame*heap) -> action -> Prop :=
     | step1_ctx : forall e c i i' instr m o rho rho' s s' sigma sigma'  
-      (HYP1 : m.(body) i = Some instr)
+      (HYP1 : body m i = Some instr)
       (HYP2: step0 o (m,i,c) instr (i,s,rho,sigma) (i',s',rho',sigma') e),
       step1 o (m,i,c,s,rho,sigma) (m,i',c,s',rho',sigma') e
     | step1_new : forall a c cid i m o rho s sigma sigma'
-      (HYP1 : m.(body) i = Some (New cid))
+      (HYP1 : body m i = Some (New cid))
       (HYP2 : fresh sigma a)
       (HYP5 : alloc sigma (a,make_new_context m i cid c) sigma'),
       step1 o (m,i,c,s,rho,sigma) (m,next_line i,c,(Loc (a,make_new_context m i cid c))::s,rho,sigma') None.
@@ -417,7 +417,7 @@ Module MakeSemantic (CC:CONTEXT).
       (H:step1 o (fr,sigma) (fr',sigma') e), 
       step2 o (fr::cs,sigma) (fr'::cs,sigma') e
     | step2_invoke : forall m i mid args rtype s v_list rho1 m1 c1 c rho cs' sigma o cid o'
-      (H0 : m.(body) i = Some (InvokeVirtual (MethSign mid args rtype)))
+      (H0 : body m i = Some (InvokeVirtual (MethSign mid args rtype)))
       (H1 : get_class p (snd o') = Some cid)
       (H2 : lookup p (MethSign mid args rtype) cid = Some m1)
       (H3 : c1 = make_call_context m i c (snd o'))
@@ -430,10 +430,10 @@ Module MakeSemantic (CC:CONTEXT).
               ((m1,0,c1,nil,rho1)::(m,S i,c,s,rho)::cs',sigma) None
     | step2_return :
       forall o m i c s rho cs sigma 
-        (H:m.(body) i = Some Return),
+        (H:body m i = Some Return),
         step2 o ((m,i,c,s,rho)::cs,sigma) (cs,sigma) None
     | step2_areturn : forall o m i c  v s rho s' rho' cs sigma m' i' c'
-      (H:m.(body) i = Some AReturn),
+      (H:body m i = Some AReturn),
       step2 o ((m,i,c,v::s,rho)::(m',i',c',s',rho')::cs,sigma) 
               ((m',i',c',v::s',rho')::cs,sigma) None.
     
@@ -443,7 +443,7 @@ Module MakeSemantic (CC:CONTEXT).
       (H:step2 o (cs,sigma) (cs',sigma') e),
       step3 L (o,cs,sigma,mu) (upd_thread L o cs',sigma',mu) e
     | step3_start : forall m i s m1 rho1 c1 L sigma lock c rho cs o o' cid
-      (H0 : m.(body) i = Some Run)
+      (H0 : body m i = Some Run)
       (H1 : get_class p (snd o') = Some cid)
       (H2 : lookup p run cid = Some m1)
       (H3 : c1 = make_call_context m i c (snd o'))
@@ -456,13 +456,13 @@ Module MakeSemantic (CC:CONTEXT).
         (fst o',Some (snd o')) ((m1,0,c1,nil,rho1)::nil),sigma,lock)
       None
     | step3_enter :forall L m i mu mu' o o' c s rho cs sigma
-      (H0 : m.(body) i = Some MonitorEnter)
+      (H0 : body m i = Some MonitorEnter)
       (H2 : acquire (fst o) (fst o') mu mu'),
       step3 L (o,(m,i,c,Loc o'::s,rho)::cs,sigma,mu)
               (upd_thread L o ((m,next_line i,c,s,rho)::cs),sigma,mu')
               None
     | step3_exit : forall L m i mu mu' o o' c s rho cs sigma 
-      (H0 : m.(body) i = Some MonitorExit)
+      (H0 : body m i = Some MonitorExit)
       (H2 : release (fst o) (fst o') mu mu'),
       step3 L (o,(m,i,c,Loc o'::s,rho)::cs,sigma,mu)
               (upd_thread L o ((m,next_line i,c,s,rho)::cs),sigma,mu')

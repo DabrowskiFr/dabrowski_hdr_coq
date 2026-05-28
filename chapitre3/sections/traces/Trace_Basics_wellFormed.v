@@ -1,4 +1,4 @@
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.Prelude.
 Require Import sections.common.GenericTrace.
 Require Import sections.traces.Trace.
@@ -11,22 +11,22 @@ Require Import sections.traces.Trace_Basics_tribe.
 Require Import sections.traces.Trace_Basics_see.
 Require Import sections.lifo.ListBasics.
  
-Require Import Lia.
+From Stdlib Require Import Lia.
 
 Module Make (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr)
-            ( O : OccurencesT Perm Address T V Tr P)
-            ( F : FatherT Perm Address T V Tr P O) 
-            ( OW : OwnsT Perm Address T V Tr P O)
-            ( R : RangeT Perm Address T V Tr P O)
-            ( Tribe : TribeT Perm Address T V Tr P O F OW R)
-            ( See : SeeT Perm Address T V Tr P).
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod)
+            ( O : OccurencesT Perm Address T V TraceMod P)
+            ( F : FatherT Perm Address T V TraceMod P O) 
+            ( OW : OwnsT Perm Address T V TraceMod P O)
+            ( R : RangeT Perm Address T V TraceMod P O)
+            ( Tribe : TribeT Perm Address T V TraceMod P O F OW R)
+            ( See : SeeT Perm Address T V TraceMod P).
 
-  Import Tr P O F OW R Tribe See.
+  Import TraceMod P O F OW R Tribe See.
   
   (*************************)
 
@@ -51,7 +51,7 @@ Module Make (Perm : MiniDecidableSet)
           intuition.
         }
         lia.
-        rewrite app_length.
+        rewrite length_app.
         simpl.
         lia.
       }
@@ -103,7 +103,7 @@ Module Make (Perm : MiniDecidableSet)
           intuition.
         }
         lia.
-        rewrite app_length.
+        rewrite length_app.
         simpl.
         lia.
       }
@@ -119,7 +119,7 @@ Module Make (Perm : MiniDecidableSet)
           intuition.
         }
         lia.
-        rewrite app_length.
+        rewrite length_app.
         simpl.
         lia.
       }

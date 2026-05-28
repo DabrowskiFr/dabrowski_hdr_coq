@@ -1,4 +1,4 @@
-Require Import List. 
+From Stdlib Require Import List. 
 Require Import sections.lifo.Length.
 Require Import sections.lifo.App. 
 Require Import sections.lifo.ListBasics.

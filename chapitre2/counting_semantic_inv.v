@@ -346,7 +346,7 @@ Module CountingSemanticInv (S:COUNTING_SEMANTIC).
     inv T0.
     split.
     intros fr; simpl; intros.
-    destruct H; try (elim H; false); subst.
+    destruct H; try (elim H; contradiction); subst.
     assert (wf1 (CP m i c om pi, Loc (a0, CP m0 i0 c0 om0 pi0):: s', rho, sigma')) by auto with datatypes.
     inv H; constructor; auto.
     intros.
@@ -354,7 +354,7 @@ Module CountingSemanticInv (S:COUNTING_SEMANTIC).
     inv H.
     eauto with datatypes.    
     destruct (le_gt_dec (S x) (length (@nil val))); try congruence.
-    simpl in l; apply False_ind; omega.
+    simpl in l; apply False_ind; lia.
     simpl.
     assert (wf1 (CP m i c om pi, Loc (a0, CP m0 i0 c0 om0 pi0):: s', rho, sigma')) by auto with datatypes.
     inv H; auto with datatypes.

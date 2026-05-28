@@ -1,4 +1,4 @@
-Require Export List.
+From Stdlib Require Export List.
 
 Module Type ASSOC_DOMAIN.
 

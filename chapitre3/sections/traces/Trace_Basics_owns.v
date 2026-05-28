@@ -1,4 +1,4 @@
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.ListBasics.
 
 Require Import sections.lifo.Prelude.
@@ -11,9 +11,9 @@ Module Make (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Import Tr : Trace.T Perm Address T V)
-            ( Import P : Proj Perm Address T V Tr)
-            ( Import O : OccurencesT Perm Address T V Tr P).
+            ( Import TraceMod : Trace.T Perm Address T V)
+            ( Import P : Proj Perm Address T V TraceMod)
+            ( Import O : OccurencesT Perm Address T V TraceMod P).
 
   Fact owns_functionnal :
     forall s,
@@ -110,8 +110,8 @@ Module Type OwnsT (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr)
-            ( O : OccurencesT Perm Address T V Tr P).
-Include Make Perm Address T V Tr P O.
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod)
+            ( O : OccurencesT Perm Address T V TraceMod P).
+Include Make Perm Address T V TraceMod P O.
 End OwnsT.

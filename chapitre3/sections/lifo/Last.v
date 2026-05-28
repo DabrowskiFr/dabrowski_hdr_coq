@@ -1,22 +1,11 @@
-Require Import List.
+From Stdlib Require Import List.
 
 Require Import sections.lifo.Notations. 
 
 Lemma last_last : forall A lst (x:A) d,   last (lst ++ [x]) d =  x.
 Proof.
-Admitted.
-  (* intros A lst x d.
-  induction lst.
-  reflexivity.
-  simpl.
-  case_eq (lst ++ [x]).
-  intros H. contradict H; firstorder.
-  intros a1 l0 H.
-  rewrite <- H.
-  clear H.
-
-  apply IHlst.
-Qed. *)
+  apply Stdlib.Lists.List.last_last.
+Qed.
 Arguments last_last [A]. 
 
 Hint Rewrite last_last : last.
@@ -43,16 +32,14 @@ Arguments last_option [A].
 (** [last_option] return the  last element of a list when it exists   *)
 Lemma last_option_app_r : forall A lst (x:A),   last_option (lst ++ [x]) = Some x.
 Proof.
-Admitted.
-  (* intros A lst x.
-  case_eq(lst ++ [x]).
-  intros  H.   contradict H; firstorder.
-  intros a l H.
-  unfold last_option.
-  rewrite <- H.
-  rewrite last_last.  
-  reflexivity.
-Qed. *)
+  intros A lst x.
+  destruct (lst ++ [x]) as [|a l] eqn:H.
+  - apply app_eq_nil in H as [_ Hx]; discriminate.
+  - unfold last_option.
+    rewrite <- H.
+    rewrite last_last.
+    reflexivity.
+Qed.
 
 Arguments last_option_app_r [A]. 
 Hint Rewrite last_option_app_r : last.

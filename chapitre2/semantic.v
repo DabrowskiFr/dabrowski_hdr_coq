@@ -105,11 +105,11 @@ Module Sem.
     
     Inductive step2 : location -> (call_stack * heap) -> (call_stack * heap) -> action -> Prop :=
     | step2_ctx : forall e cs m i i' s s' rho rho' o sigma sigma' instr
-      (HYP1 : m.(body) i = Some instr)
+      (HYP1 : body m i = Some instr)
       (H:step0 o (m,i) instr (i,s,rho,sigma) (i',s',rho',sigma') e), 
       step2 o ((m,i,s,rho)::cs,sigma) ((m,i',s',rho')::cs,sigma') e
     | step2_invoke : forall m i mid args rtype s v_list rho1 m1 rho cs' sigma o cid o' fd
-      (H0 : m.(body) i = Some (InvokeVirtual (MethSign mid args rtype)))
+      (H0 : body m i = Some (InvokeVirtual (MethSign mid args rtype)))
       (H1 : sigma o' = Some (cid,fd))
       (H2 : lookup p (MethSign mid args rtype) cid = Some m1)
       (H8 : rho1 0 = Loc o')
@@ -121,10 +121,10 @@ Module Sem.
               ((m1,0,nil,rho1)::(m,S i,s,rho)::cs',sigma) None
     | step2_return :
       forall o m i s rho cs sigma 
-        (H:m.(body) i = Some Return),
+        (H:body m i = Some Return),
         step2 o ((m,i,s,rho)::cs,sigma) (cs,sigma) None
     | step2_areturn : forall o m i v s rho s' rho' cs sigma m' i'
-      (H:m.(body) i = Some AReturn),
+      (H:body m i = Some AReturn),
       step2 o ((m,i,v::s,rho)::(m',i',s',rho')::cs,sigma) 
               ((m',i',v::s',rho')::cs,sigma) None.
     
@@ -134,7 +134,7 @@ Module Sem.
       (H:step2 o (cs,sigma) (cs',sigma') e),
       step3 L (o,cs,sigma,mu) (upd_thread L o cs',sigma',mu) e
     | step3_start : forall m i s m1 rho1 L sigma lock rho cs o o' cid fd
-      (H0 : m.(body) i = Some Run)
+      (H0 : body m i = Some Run)
       (H1 : sigma o' = Some (cid,fd))
       (H2 : lookup p run cid = Some m1)
       (H8 : rho1 0 = Loc o')
@@ -146,13 +146,13 @@ Module Sem.
         o' ((m1,0,nil,rho1)::nil),sigma,lock)
       None
     | step3_enter :forall L m i mu mu' o o' s rho cs sigma
-      (H0 : m.(body) i = Some MonitorEnter)
+      (H0 : body m i = Some MonitorEnter)
       (H2 : acquire o o' mu mu'),
       step3 L (o,(m,i,Loc o'::s,rho)::cs,sigma,mu)
               (upd_thread L o ((m,next_line i,s,rho)::cs),sigma,mu')
               None
     | step3_exit : forall L m i mu mu' o o' s rho cs sigma 
-      (H0 : m.(body) i = Some MonitorExit)
+      (H0 : body m i = Some MonitorExit)
       (H2 : release o o' mu mu'),
       step3 L (o,(m,i,Loc o'::s,rho)::cs,sigma,mu)
               (upd_thread L o ((m,next_line i,s,rho)::cs),sigma,mu')

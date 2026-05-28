@@ -51,7 +51,7 @@ unfold local_coherency in *.
 intros.
 generalize (H H0 H1 H2).
 generalize (incr_lVect_prop pi m0 m c0 c (loop p (m0,i0)) (i,j)).
-omega.
+lia.
 Qed.
 
 Lemma lc_new_value (p:program) (cp:code_pointer) :
@@ -229,7 +229,7 @@ intros.
 subst.
 unfold invoke_mVect, conv_mVect in *.
 rewrite MVect.get_upd1 in H3.
-omega.
+lia.
 
 
 destruct H0.
@@ -317,18 +317,20 @@ inv H11.
 (* step2 *)
 rewrite (upd_thread_old L o cs' l) in H.
 destruct (HD _ H1) as [V|[V1 V2]].
-eapply HLCoherency; eauto.
+eapply HLCoherency; [exact H | exact H0 | exact V].
 subst.
 unfold gunicity in HGUnicity.
-assert (dcounter (CP m0 i0 c0 om0 pi0,s0,rho0) (CP m i c om pi,s,rho)).
-eapply HGUnicity; eauto using in_eq.
+pose proof
+  (HGUnicity o l ((CP m0 i0 c0 om0 pi0,s0,rho0)::cs0) cs
+     (CP m0 i0 c0 om0 pi0,s0,rho0) (CP m i c om pi,s,rho)
+     n H12 H (@in_eq frame (CP m0 i0 c0 om0 pi0,s0,rho0) cs0) H0) as H2.
 unfold dcounter in H2.
 
 unfold local_coherency.
-intros.
-subst.
-generalize (H2 (refl_equal _) (refl_equal _)).
-tauto.
+intros Hm Hc Hom.
+exfalso.
+apply (H2 (eq_sym Hm) (eq_sym Hc)).
+assumption.
 assumption.
 
 (* run *)
@@ -336,8 +338,8 @@ unfold upd_thread in H.
 simpl in H; Case'.
 (* nouveau thread *)
 inj H.
-destruct H0; [idtac | tauto].
-inj H.
+destruct H0 as [H0 | H0]; [|contradiction].
+inj H0.
 destruct (HD _ H1) as [V|[V1 V2]].
 (* ancienne adresse *)
 apply HGCoherency in H1.
@@ -348,7 +350,7 @@ intros.
 subst.
 unfold invoke_mVect, conv_mVect, conv_lVect in *.
 rewrite MVect.get_upd1 in H2.
-omega.
+lia.
 (* nouvelle adresse *)
 subst.
 assert (~inDom (a,CP m0 i0 c0 om0 pi0) sigma')
@@ -408,8 +410,8 @@ assert (k=0).
 assert (S k = 1).
 apply list1 in H0.
 simpl in H0.
-omega.
-omega.
+lia.
+lia.
 rewrite H1 in *|-.
 simpl in *|-.
 injection H.
@@ -432,8 +434,7 @@ Lemma local_coherency_scase (p:program) (l:memory_location) (cp:code_pointer) :
 Proof.
 destruct l as [ a c ].
 destruct c as [m0 i0 c0 om0 pi0].
-intros cp0.
-destruct cp0 as [m i c om pi].
+destruct cp as [m i c om pi].
 intros.
 unfold local_coherency in H.
 generalize (H H0 H1 H2).
@@ -445,7 +446,7 @@ intro.
 subst.
 rewrite H5 in *.
 rewrite <- H3 in H6.
-omega.
+lia.
 Qed.
 
 Lemma slc_old_value :
@@ -527,7 +528,7 @@ Qed.
 
 Lemma step0_cflow :
   forall l m i c instr s rho sigma i' s' rho' sigma' e,
-    m.(body) i = Some instr ->
+    body m i = Some instr ->
     step0 l (m,i,c) instr (i,s,rho,sigma) (i',s',rho',sigma') e ->
     cflow m (i,i').
 Proof.
@@ -663,7 +664,7 @@ subst.
 assert (False).
 unfold invoke_mVect, conv_mVect in *.
 rewrite MVect.get_upd1 in *.
-omega.
+lia.
 elim H0; reflexivity.
 
 destruct H0.
@@ -755,20 +756,22 @@ inv H11.
 (* step2 *)
 rewrite (upd_thread_old L o cs' l) in H.
 destruct HDomain.
-eapply HSLCoherency; eauto.
+eapply HSLCoherency; [exact H | exact H0 | exact H2].
 subst.
 unfold gunicity in HGUnicity.
 destruct cp as [m i c om pi].
-assert (dcounter (CP m0 i0 c0 om0 pi0,s0,rho0) (CP m i c om pi,s,rho)).
-eapply HGUnicity; eauto using in_eq.
+pose proof
+  (HGUnicity o l ((CP m0 i0 c0 om0 pi0,s0,rho0)::cs0) cs
+     (CP m0 i0 c0 om0 pi0,s0,rho0) (CP m i c om pi,s,rho)
+     n H12 H (@in_eq frame (CP m0 i0 c0 om0 pi0,s0,rho0) cs0) H0) as H3.
 unfold dcounter in H3.
 
 destruct H2 as [V1 V2]; subst.
 unfold strong_local_coherency.
-intros.
-subst.
-generalize (H3 (refl_equal _) (refl_equal _)).
-tauto.
+intros Hm Hc Hom _.
+exfalso.
+apply (H3 (eq_sym Hm) (eq_sym Hc)).
+assumption.
 assumption.
 
 (* run *)
@@ -776,8 +779,8 @@ unfold upd_thread in H.
 simpl in *; Case'.
 (* nouveau thread *)
 inj H.
-destruct H0; [idtac | tauto].
-inj H.
+destruct H0 as [H0 | H0]; [|contradiction].
+inj H0.
 destruct HDomain.
 (* ancienne adresse *)
 apply HGCoherency in H.
@@ -789,7 +792,7 @@ subst.
 assert (False).
 unfold invoke_mVect, conv_mVect in *.
 rewrite MVect.get_upd1 in *.
-omega.
+lia.
 elim H0.
 
 (* nouvelle adresse *)

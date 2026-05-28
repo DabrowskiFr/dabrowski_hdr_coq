@@ -1,6 +1,6 @@
 (** A module of bounded naturals *)
-Require Import Arith.
-Require Import Mergesort.
+From Stdlib Require Import Arith.
+From Stdlib Require Import Mergesort.
 Require Import sections.lifo.ProofEquality.
 
 Set Implicit Arguments.
@@ -88,5 +88,4 @@ Lemma boundedNatConversionEq
 Proof.
   auto.
 Qed.
-
 

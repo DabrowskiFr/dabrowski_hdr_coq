@@ -1,7 +1,7 @@
-Require Import Arith.
-Require Import Nat.
-Require Import Eqdep_dec.
-Require Import Peano_dec.
+From Stdlib Require Import Arith.
+From Stdlib Require Import Nat.
+From Stdlib Require Import Eqdep_dec.
+From Stdlib Require Import Peano_dec.
 (** * Axiom K is provable for [nat] *)
 
 Theorem K_nat :

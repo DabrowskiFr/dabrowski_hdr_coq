@@ -1,41 +1,40 @@
-Require Import Eqdep_dec.
-Require Import List.
-Require Import Nat.
+From Stdlib Require Import Eqdep_dec.
+From Stdlib Require Import List.
+From Stdlib Require Import Nat.
+From Stdlib Require Import Peano_dec.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Logic.ProofIrrelevance.
 
 
 (* Ne pas utiliser l1 et l2 qui ne resterons pas *)
 Lemma l1 : forall A (H:forall x y:A, {x=y}+{x<>y}) (a:A) l, 
   List.count_occ H (a::l) a < 2 -> ~ In a l. 
 Proof.
-Admitted.
-  (* intros.
-  induction l; intro H1; destruct H1;[subst|].
-
-  simpl in H0.
-  destruct (H a a);[|intuition].
-  apply (lt_n_O _ (lt_S_n _ _ (lt_S_n _ _ H0))).
-
-  apply IHl;[|assumption].
-  simpl in H0 |- *.
-  destruct (H a a);[|intuition].
-  destruct (H a0 a);
-    [ apply (lt_S _ _ (lt_S_n _ _ H0))
-      | apply H0 ].
-
-Qed. *)
+  intros A H a l Hcount.
+  induction l as [|b l IH]; intro Hin.
+  - contradiction.
+  - simpl in Hcount.
+    destruct (H a a) as [_|Haa]; [|contradiction].
+    destruct Hin as [Hba | Hin].
+    + subst.
+      destruct (H a a); [lia|contradiction].
+    + apply IH; [|assumption].
+      simpl.
+      destruct (H a a) as [_|Haa']; [|contradiction].
+      destruct (H b a) as [Hba | Hba].
+      * subst; lia.
+      * lia.
+Qed.
 
 Lemma l2 : forall A (H:forall x y:A, {x=y}+{x<>y}) (a:A) l, 
   (forall b, List.count_occ H (a::l) b < 2) ->
   (forall b, List.count_occ H l b < 2).
 Proof.
-Admitted.
-  (* intros.
-  generalize (H0 b); intro H1.
-  simpl in H1.
-  destruct (H a b).
-  apply (lt_S _ _ (lt_S_n _ _ H1)).
-  assumption.
-Qed. *)
+  intros A H a l H0 b.
+  specialize (H0 b).
+  simpl in H0.
+  destruct (H a b); lia.
+Qed.
 
 Section Aux.
 
@@ -51,11 +50,10 @@ Section Aux.
   Theorem eq_rect_eq_nat :
     forall (p:nat) (Q:nat->Type) (x:Q p) (h:p=p), x = eq_rect p Q x p h.
   Proof.
-  Admitted.
-    (* intros.
+    intros.
     apply (K_dec_set eq_nat_dec) with (p:=h).
     reflexivity.
-  Qed. *)
+  Qed.
 
   Lemma eq_rect_eq_dec_set : forall (A:Set) (H:forall x y:A, {x=y}+{x<>y})
     (p:A) (Q:(A->Type)) (x:Q p) (h:p=p), x = eq_rect p Q x p h.
@@ -131,19 +129,21 @@ Section ListLength.
   Lemma has_length_length : forall A l n,
     has_length A l n <-> List.length l = n.
   Proof.
-  Admitted.
-    (* split;
-      [ induction 1; subst; auto
-        | generalize n;
-          induction l; intros n0 H;
-            [rewrite <- H | destruct n0]; eauto].
-  Qed. *)
+    split.
+    - induction 1; subst; simpl; auto.
+    - revert n.
+      induction l as [|a l IH]; intros n Hlen; destruct n; simpl in Hlen; try discriminate.
+      + constructor.
+      + eapply has_length_cons; eauto.
+  Qed.
 
   Scheme has_length_ind' := Induction for has_length Sort Prop.
 
   Theorem has_length_uniqueness_proof : forall l n (H H0 : has_length A l n), H = H0.
   Proof.
-  Admitted.
+    intros.
+    apply proof_irrelevance.
+  Qed.
 (*    induction H using has_length_ind'; intro H0.
     
     change (has_length_nil A) with
@@ -180,7 +180,9 @@ Section Le.
   
   Theorem le_uniqueness_proof : forall (n m : nat) (p q : n <= m), p = q.
   Proof.
-  Admitted.
+    intros.
+    apply le_unique.
+  Qed.
 (*    induction p using le_ind'; intro q.
     replace (le_n n) with
       (eq_rect n (fun n0 => n <= n0) (le_n n) n (refl_equal n)).
@@ -210,4 +212,3 @@ End Le.
 
 
  
-

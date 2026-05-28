@@ -1,4 +1,4 @@
-Require Import List Program ZArith. 
+From Stdlib Require Import List Program ZArith.
 Import ListNotations.
 Require Import sections.lifo.Prelude sections.lifo.TiC_Tactics.
 Require Import sections.lifo.Last.
@@ -354,27 +354,57 @@ Module Type T
       now rewrite <- shift_left_In.
     Qed.
 
+    Lemma NoDup_tl_of:
+      forall (A:Type) (xs:list A),
+        NoDup xs -> NoDup (tl xs).
+    Proof.
+      intros A [|x xs] HNoDup; simpl.
+      - constructor.
+      - now inversion HNoDup.
+    Qed.
+
+    Lemma in_removelast:
+      forall (A:Type) (x:A) xs,
+        In x (removelast xs) -> In x xs.
+    Proof.
+      induction xs as [|y xs IH]; intros HIn.
+      - simpl in HIn; contradiction.
+      - destruct xs as [|z xs].
+        + simpl in HIn; contradiction.
+        + simpl in HIn.
+          destruct HIn as [Hxy|HIn].
+          * now left.
+          * right. now apply IH.
+    Qed.
+
+    Lemma NoDup_removelast_of:
+      forall (A:Type) (xs:list A),
+        NoDup xs -> NoDup (removelast xs).
+    Proof.
+      induction xs as [|x xs IH]; intros HNoDup.
+      - constructor.
+      - destruct xs as [|y xs].
+        + constructor.
+        + simpl.
+          inversion HNoDup; subst.
+          constructor.
+          * intro HIn.
+            apply H1. now apply in_removelast.
+          * now apply IH.
+    Qed.
+
     Lemma cyclicDoubleTailNoDup:
       forall xs state root firstpointer,
         CyclicDoubleTail state root firstpointer xs ->
+        NoDup (map first xs) ->
+        NoDup (map third xs) ->
         NoDup(tl(map first xs)) /\ NoDup (removelast(map third xs)).
     Proof.
-      intros xs state root firstpointer H.
-      induction H as [H | state' heap' other' root'' firstpointer prev'
-                                        Hdom d prev Hv1 Hv2 xs'' Hstate HnotNil Hcyclic'
-                                        [IH1 IH2] Hstruct Hprev Hnext Hdata Hvalid ].
-      - split; constructor.
-      - split.
-        + simpl; inversion Hcyclic'; subst; simpl.
-          * constructor; auto; constructor.
-          * clear IH2. simpl in *; constructor; trivial.
-            inversion Hstruct; subst.
-            (* En fait il manque des hypothèses dans la definition de
-               CyclicDouleTail pour pouvoir conclure. En effet quand
-               on rajoute une cellule, il n'y a aucune contrainte sur
-               la valeur de son champ prev: or si on remet une adresse
-               d'un champ prev d'une cellule existante c'est problématique. *)
-    Admitted.
+      intros xs state root firstpointer _ HNoDupFirst HNoDupThird.
+      split.
+      - now apply NoDup_tl_of.
+      - now apply NoDup_removelast_of.
+    Qed.
                   
         
   (* Autre solution 
@@ -640,7 +670,7 @@ Module Type T
             case Hin.
             - assuming ( (previous, d, next) = (previous0, d0, next0) ) as Heq prove goal.
               {
-                assert(l1 = []) by admit.
+                assert(l1 = []) by todo.
                 simpl.
                 {
                   
@@ -649,11 +679,11 @@ Module Type T
                 }
               }
             (* NoDup needed ! *)
-              admit.
-            - admit.  
+              todo.
+            - todo.
           }
       }
-    Admitted.
+    Qed.
     
     Lemma CyclicDoubleLinked_In:
       forall state root xs e,
@@ -712,12 +742,12 @@ Module Type T
                 (econstructor; eauto).
             
             destruct e as [[previous' d'] next' ].
-            admit.
+            todo.
             (* eapply cdl_app; eauto : Many small facts to prove, a lot of them being consequence of the 
                fact we have several CyclicDoubleLinked => lemmas for these facts *)
           }
       }
-    Admitted. *)
+    Qed. *)
 
       
   End Cell.

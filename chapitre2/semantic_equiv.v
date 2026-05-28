@@ -39,7 +39,7 @@ Inductive equiv_val (sigma:Sem.heap) : Sem.val -> S.val -> Prop :=
 | equiv_val_null : equiv_val sigma Sem.Null S.Null
 | equiv_val_loc : forall m1 m2, 
   sigma |- m1 ~ml m2 -> equiv_val sigma (Sem.Loc m1) (S.Loc m2).
-Hint Constructors equiv_val.
+Hint Constructors equiv_val : core.
 Notation "sigma '|-' x ~v y" := (equiv_val sigma x y) (at level 10).
 
 Definition equiv_local (sigma:Sem.heap) (l1:Sem.local) (l2:S.local) : Prop := 
@@ -59,7 +59,7 @@ Notation "sigma '|-' x ~s y" := (equiv_stack sigma x y) (at level 10).
 Inductive equiv_bot (A1 A2:Set) (equiv:A1->A2->Prop) : option A1 -> option A2 -> Prop :=
 | equiv_bot_none : equiv_bot A1 A2 equiv None None
 | equiv_bot_some : forall a1 a2, equiv a1 a2 -> equiv_bot A1 A2 equiv (Some a1) (Some a2).
-Implicit Arguments equiv_bot [A1 A2].
+Arguments equiv_bot {A1 A2} _ _ _.
 
 Definition equiv_heap (h1:Sem.heap) (h2:S.heap) : Prop := 
   (forall  l c fd1, h1 l = Some (c,fd1) -> exists fd2, h2 (l,c) = Some fd2 /\ h1 |- fd1 ~o fd2)
@@ -112,7 +112,7 @@ Proof.
   intros y; unfold Sem.subst, S.subst.
   comp x y; auto.
 Qed.
-Hint Resolve equiv_subst.
+Hint Resolve equiv_subst : core.
 
 Lemma equiv_updatefield : forall sigma o1 o2 f v1 v2,
   sigma |- v1 ~v v2 -> 
@@ -123,7 +123,7 @@ Proof.
   intros y; unfold S.updateField, Sem.updateField.
   comp f y; auto.
 Qed.
-Hint Resolve equiv_updatefield.
+Hint Resolve equiv_updatefield : core.
 
 Lemma read_equiv : forall sigma1 sigma2 o1 f v1 o2,
   sigma1 ~h sigma2 -> 
@@ -178,7 +178,7 @@ Proof.
   econstructor; eauto.
   rewrite H1; eauto.
 Qed.
-Implicit Arguments write_monotone_ml.
+Arguments write_monotone_ml {sigma o f v sigma'} _ _ _ _.
 
 Lemma write_monotone_v : forall sigma o f v sigma',
   Sem.write sigma o f v sigma' ->
@@ -190,7 +190,7 @@ Proof.
   destruct H as [m [T1 T2]].
   inv H0; constructor; eauto.
 Qed.
-Implicit Arguments write_monotone_v.
+Arguments write_monotone_v {sigma o f v sigma'} _ _ _ _.
 
 Lemma write_equiv : forall sigma1 sigma2 o1 f v1 v2 o2 sigma1',
   sigma1 ~h sigma2 -> 
@@ -307,7 +307,7 @@ Proof.
   econstructor.
   rewrite T2; eauto.
 Qed.
-Implicit Arguments alloc_monotone_ml.
+Arguments alloc_monotone_ml {sigma o cid sigma'} _ _ _ _.
 
 Lemma alloc_monotone_v : forall sigma o cid sigma',
   Sem.alloc sigma cid o sigma' ->
@@ -318,7 +318,7 @@ Proof.
   inv H0; constructor.
   eapply alloc_monotone_ml; eauto.
 Qed.
-Implicit Arguments alloc_monotone_v.
+Arguments alloc_monotone_v {sigma o cid sigma'} _ _ _ _.
 
 Lemma alloc_equiv : forall sigma1 sigma2 o1 sigma1' cid,
   sigma1 ~h sigma2 -> 
@@ -626,27 +626,25 @@ Proof.
   intros.
   unfold rho2'.
   destruct (eq_var x 0).
-  apply False_ind; omega.
+  apply False_ind; lia.
   destruct (le_gt_dec x (length args)); auto.
-  apply False_ind; omega.
+  apply False_ind; lia.
   intros.
   unfold rho2'.
   destruct (eq_var x 0).
-  apply False_ind; omega.
+  apply False_ind; lia.
   destruct (le_gt_dec x (length args)); auto.
-  apply False_ind; omega.
+  apply False_ind; lia.
   congruence.  
   eapply equiv_upd_thread; eauto; repeat (econstructor; eauto).
   intros x.
   unfold rho2'; destruct (eq_var x 0).
   subst; rewrite H14; constructor; auto.
   destruct (le_gt_dec x (length args)).
-  rewrite H17; try omega.
+  rewrite H17; try lia.
   apply equiv_stack_nth; auto.
-  unfold var in *; omega.
-  rewrite H18.
+  rewrite H18 by lia.
   constructor.
-  unfold var in *; omega.
 
   inv H5.
   exists None; 

@@ -1,8 +1,8 @@
 (** Various utilities for manipulating lists.*)
 
-Require Import List.
-Require Import ZArith.
-Require Import Lia.
+From Stdlib Require Import List.
+From Stdlib Require Import ZArith.
+From Stdlib Require Import Lia.
 Require Import sections.lifo.Length.
 Require Import sections.lifo.Firstn_skipn.
 
@@ -72,13 +72,21 @@ Definition shift (A:Type)(d:Z)(f:nat->A)(l:list A) : list A :=
         (List.map f (List.seq (minus (List.length l) d_nat) d_nat))
   end.
 
-Hint Rewrite seq_length map_length firstn_length skipn_length app_length combine_length : length.
+Hint Rewrite length_seq length_map length_firstn skipn_length length_app length_combine : length.
 
 Lemma shift_length :
   forall (A:Type)(d:Z)(f:nat->A)(l:list A),
     List.length (shift d f l) = List.length l.
 Proof.
-Admitted.
+  intros A d f l; destruct d; simpl.
+  - reflexivity.
+  - rewrite length_app, length_map, length_seq, length_firstn.
+    pose proof (Nat.le_min_r (nat_of_P p) (length l)).
+    lia.
+  - rewrite length_app, skipn_length, length_map, length_seq.
+    pose proof (Nat.le_min_r (nat_of_P p) (length l)).
+    lia.
+Qed.
   (* intros A d f l; destruct d; simpl.
     trivial.
     autorewrite with length.
@@ -99,5 +107,4 @@ Admitted.
 Qed. *)
 
 Hint Rewrite shift_length fold_right_length_app : length.
-
 

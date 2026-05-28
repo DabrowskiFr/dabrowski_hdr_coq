@@ -1,4 +1,4 @@
-Require Import String.
+From Stdlib Require Import String.
 
 Inductive result (A: Type) : Type :=
 | Ok: A -> result A 

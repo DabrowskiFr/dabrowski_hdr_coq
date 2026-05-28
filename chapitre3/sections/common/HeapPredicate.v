@@ -1,5 +1,5 @@
-Require Import List. Import ListNotations.
-Require Import ZArith.
+From Stdlib Require Import List. Import ListNotations.
+From Stdlib Require Import ZArith Lia.
 Require Import sections.lifo.Prelude.
 Require Import Heap.
 
@@ -424,14 +424,14 @@ Module Type T
           apply nodeListList in Hl.
           assert(l'' = (la,na,lxs)::li) by (eapply List_inj; eauto); subst.
           simpl in *.
-          assert(length ( l1 ++ root :: lxs :: map trd li) = 
-                 length (lxs :: map trd li)) as Hlen by (rewrite H2; trivial).
-          admit.
+	          assert(length ( l1 ++ root :: lxs :: map trd li) = 
+	                 length (lxs :: map trd li)) as Hlen by (rewrite H2; trivial).
+	          rewrite length_app in Hlen; simpl in Hlen; lia.
                  (* autorewrite with length in Hlen; simpl in Hlen. *)
           (* revert Hlen. clear. intro Hlen. *)
           (* induction li; simpl in *; omega. *)
         * inversion Hl'; subst;  apply nodeListCons in Hl.
           eapply IHli; eauto.
-  Admitted.
+  Qed.
 
 End T.

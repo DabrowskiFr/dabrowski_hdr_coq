@@ -1,4 +1,4 @@
-Require Import Program Coq.Classes.Equivalence.
+From Stdlib Require Import Program Classes.Equivalence.
 
 Require Import sections.lifo.Prelude Value.
 

@@ -101,7 +101,7 @@ generalize (H'1 a0 a1 Ha _ _  fl H5).
 intro.
 destruct H8.
 split.
-omega.
+lia.
 
 intro.
 simpl in H10.
@@ -110,7 +110,7 @@ intro.
 destruct H11.
 apply H9 in H12.
 apply H7 in H11.
-omega.
+lia.
 Qed.
 
 Definition disjoint_reachability (ls:list heap) (A:PPT->Prop) (ppt:PPT) : Prop :=
@@ -209,10 +209,10 @@ eauto.
 
 generalize (H' a4 a5 H8 m1 c1 (loop p (m1,i1)) H1).
 generalize (H'0 a0 a3 H7 m1 c1 (loop p (m1,i1)) H6).
-intuition; congruence.
+firstorder congruence.
 generalize (H' a4 a5 H8 m1 c1 (loop p (m1,i1)) H1).
 generalize (H'0 a0 a3 H7 m1 c1 (loop p (m1,i1)) H6).
-intuition; congruence.
+firstorder congruence.
 assumption.
 Qed.
 

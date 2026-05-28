@@ -1,4 +1,4 @@
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.Prelude.
 Require Import sections.common.GenericTrace.
 Require Import sections.traces.Trace.
@@ -8,20 +8,20 @@ Require Import sections.traces.Trace_Basics_range.
 Require Import sections.traces.Trace_Basics_father.
 Require Import sections.traces.Trace_Basics_owns.
 
-Require Import Lia. 
+From Stdlib Require Import Lia. 
 
 Module Make ( Perm : MiniDecidableSet )
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T )
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr)
-            ( O : OccurencesT Perm Address T V Tr P)
-            ( F : FatherT Perm Address T V Tr P O) 
-            ( OW : OwnsT Perm Address T V Tr P O)
-            ( R : RangeT Perm Address T V Tr P O).
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod)
+            ( O : OccurencesT Perm Address T V TraceMod P)
+            ( F : FatherT Perm Address T V TraceMod P O) 
+            ( OW : OwnsT Perm Address T V TraceMod P O)
+            ( R : RangeT Perm Address T V TraceMod P O).
 
-  Import Tr  P O F OW R.
+  Import TraceMod P O F OW R.
   
    (** ** tribe *)
 
@@ -29,6 +29,30 @@ Module Make ( Perm : MiniDecidableSet )
   Hint Resolve owns_se_s : owns.
   Hint Resolve range_s_se : range.
   Hint Resolve father_s_se : father.
+
+  Lemma threadId_of_last :
+    forall s t a, threadId_of (pi (length s) (s • (t, a))) == t.
+  Proof.
+    intros; unfold lift; rewrite pi_length_cons; reflexivity.
+  Qed.
+
+  Lemma action_of_last :
+    forall s t a, action_of (pi (length s) (s • (t, a))) == a.
+  Proof.
+    intros; unfold lift; rewrite pi_length_cons; reflexivity.
+  Qed.
+
+  Lemma length_dot :
+    forall (s : Tr) (e : Event.t), length (s • e) = S (length s).
+  Proof.
+    intros; rewrite length_app; simpl; lia.
+  Qed.
+
+  Lemma last_dot :
+    forall (s : Tr) (e : Event.t), length (s • e) - 1 = length s.
+  Proof.
+    intros; rewrite length_dot; lia.
+  Qed.
 
   (** *** s_se *)
 
@@ -38,16 +62,39 @@ Module Make ( Perm : MiniDecidableSet )
       tribeChildren (s • e) p t.
   Proof.
     intros s p t e h_tribeChildren.
-    induction h_tribeChildren.
-    - destruct (range_s_se s p i j e H) as [[Ha Hb] | Hc].
-      + constructor 1 with i j t0 k; eauto with nth_error owns.
-      + assert (k < length s) by eauto with nth_error.
-        constructor 1 with i (length s) t0 k; 
-          solve [eauto with nth_error owns | auto with *].
-    - assert (father (s • e) t' t0) by eauto with father.
-      now constructor 2 with (t:=t0).
-      Admitted.
-  (* Qed. *)
+    induction h_tribeChildren as
+        [i j owner h_range h_owns k child h_interval h_thread h_fork
+        | parent child h_tribeChildren IH h_father].
+    - assert (k < length s) as h_k_lt.
+      {
+        apply (@lift_nth_error_defined_left Event.t action k (@snd threadId action) s).
+        exists (Fork child); exact h_fork.
+      }
+      destruct (range_s_se s p i j e h_range) as [[_ h_range_app] | h_range_app].
+      + econstructor 1 with (i:=i) (j:=j) (t:=owner) (k:=k).
+        * exact h_range_app.
+        * apply owns_s_se; exact h_owns.
+        * exact h_interval.
+        * replace (pi k (s • e)) with (pi k s).
+          -- exact h_thread.
+          -- symmetry; apply ListBasics.nth_error_append_left; exact h_k_lt.
+        * replace (pi k (s • e)) with (pi k s).
+          -- exact h_fork.
+          -- symmetry; apply ListBasics.nth_error_append_left; exact h_k_lt.
+      + econstructor 1 with (i:=i) (j:=length s) (t:=owner) (k:=k).
+        * exact h_range_app.
+        * apply owns_s_se; exact h_owns.
+        * destruct h_interval as [h_i_k _]; lia.
+        * replace (pi k (s • e)) with (pi k s).
+          -- exact h_thread.
+          -- symmetry; apply ListBasics.nth_error_append_left; exact h_k_lt.
+        * replace (pi k (s • e)) with (pi k s).
+          -- exact h_fork.
+          -- symmetry; apply ListBasics.nth_error_append_left; exact h_k_lt.
+    - constructor 2 with (t:=parent).
+      + exact IH.
+      + apply father_s_se; exact h_father.
+  Qed.
 
   Fact tribe_s_se :
     forall s p t, 
@@ -72,71 +119,111 @@ Module Make ( Perm : MiniDecidableSet )
         tribeChildren s p t.
   Proof.
     intros s e h_wf_occurences h_wf_fork h_wf_open_close p t h_tribeChildren h_neq.
-    induction h_tribeChildren.
-    - assert (k < length s).
+    induction h_tribeChildren as
+        [i j owner h_range h_owns k child h_interval h_thread h_fork
+        | parent child h_tribeChildren IH h_father].
+    - assert (k < length s) as h_k_lt.
       {
-        assert (k < length (s • e)) by eauto with nth_error.
-        destruct (Compare_dec.lt_eq_lt_dec k (length s)) as [ []|  ]; [assumption | subst |].
-        elim (h_neq t0).
-        destruct e.
-        admit.
-        admit.
-        (* now autorewrite with nth_error in H2, H3; simpl in H2, H3; injection H2; injection H3; intros; subst. *)
-        (* autorewrite with length in *; simpl in *.
-        intuition. *)
-      }
-      destruct e as [t a].
-      assert (a <> Open p).
-      {
-        assert (i < length s) by auto with *.
-        contradict H5.
-        assert (i = length s).
+        assert (k < length (s • e)) as h_k_lt_app.
         {
-          assert (action_of (pi i (s • (t,a))) == Open p) by now inversion H.
-          assert (action_of (pi (length s) (s • (t,a))) == Open p) by admit.
-              (* (subst; now autorewrite with nth_error). *)
-          wellFormed_occurences (Open p).
+          apply (@lift_nth_error_defined_left Event.t action k (@snd threadId action)
+                 (s • e)).
+          exists (Fork child); exact h_fork.
         }
-        auto with *.
+        destruct (Compare_dec.lt_eq_lt_dec k (length s)) as [[h_k_lt | h_k_eq] | h_k_gt].
+        - exact h_k_lt.
+        - subst k.
+          exfalso.
+          apply (h_neq owner).
+          destruct e as [last_t last_a].
+          rewrite threadId_of_last in h_thread.
+          rewrite action_of_last in h_fork.
+          injection h_thread; injection h_fork; intros; subst; reflexivity.
+        - rewrite length_dot in h_k_lt_app; lia.
       }
-      assert (owns s p t0) by (apply owns_se_s with (t,a); congruence).
-      nth_error_rewrite H2; nth_error_rewrite H3.
-      destruct (range_se_s_neq_open s t a h_wf_occurences h_wf_open_close p i j H H5) as [[Hu Hv] | ].
-      + now constructor 1 with i j t0 k.
-      + constructor 1 with i (length s - 1) t0 k; auto with *.
-      admit.
-    - assert (father s t' t0) by (apply father_se_s with e; congruence).
-      assert (tribeChildren s p t0).
+      destruct h_interval as [h_i_k h_k_j].
+      destruct e as [last_t last_a].
+      assert (last_a <> Open p) as h_not_open.
       {
-        assert (forall t', e <> (t', Fork t0)).
+        intro h_last_open.
+        assert (i < length s) as h_i_lt by lia.
+        assert (action_of (pi i (s • (last_t, last_a))) == Open p) as h_open_i
+            by (inversion h_range; subst; assumption).
+        assert (action_of (pi (length s) (s • (last_t, last_a))) == Open p) as h_open_last.
         {
-          intros; intro; subst.
-           destruct H as [k0 [Hu Hv]].
-           assert (k0 < length s).
-           {
-            admit.
-             (* destruct (Compare_dec.lt_eq_lt_dec k0 (length s)) as [[]|]; [assumption | subst |].
-             autorewrite with nth_error in Hu; simpl in Hu; injection Hu; intros; subst.
-             eapply h_wf_fork; autorewrite with nth_error; reflexivity.
-             assert (k0 < length (s • (t'0, Fork t0))).
-             eapply lift_nth_error_defined_left; eauto.
-             autorewrite with length in H; simpl in H.
-             intuition. *)
-           }
-           assert (length s < k0).
-           {
-            admit.
-             (* eapply h_wf_fork. *)
-             (* autorewrite with nth_error; reflexivity. *)
-             (* eauto with nth_error. *)
-           }
-           auto with *.
+          subst last_a; apply action_of_last.
         }
-        now apply IHh_tribeChildren.
+        assert (i = length s) as h_i_eq
+            by (apply h_wf_occurences with (a:=Open p);
+                [constructor | exact h_open_i | exact h_open_last]).
+        lia.
       }
-      now constructor 2 with t0.
-      Admitted.
-  (* Qed. *)
+      assert (owns s p owner) as h_owns_s.
+      {
+        apply owns_se_s with (last_t, last_a).
+        - exact h_owns.
+        - intro h_eq; inversion h_eq; subst; contradiction.
+      }
+      assert (threadId_of (pi k s) == owner) as h_thread_s.
+      {
+        replace (pi k s) with (pi k (s • (last_t, last_a))).
+        - exact h_thread.
+        - apply ListBasics.nth_error_append_left; exact h_k_lt.
+      }
+      assert (action_of (pi k s) == Fork child) as h_fork_s.
+      {
+        replace (pi k s) with (pi k (s • (last_t, last_a))).
+        - exact h_fork.
+        - apply ListBasics.nth_error_append_left; exact h_k_lt.
+      }
+      destruct (range_se_s_neq_open s last_t last_a h_wf_occurences h_wf_open_close
+                                      p i j h_range h_not_open) as [[_ h_range_s] | [_ h_range_s]].
+      + constructor 1 with i j owner k; assumption || split; assumption.
+      + constructor 1 with i (length s - 1) owner k; try assumption.
+        split; [assumption | lia].
+    - assert (father s child parent) as h_father_s.
+      {
+        apply father_se_s with e.
+        - exact h_father.
+        - apply h_neq.
+      }
+      assert (tribeChildren s p parent) as h_tribeChildren_s.
+      {
+        apply IH.
+        intros fork_thread h_eq.
+        subst e.
+        destruct h_father as [k0 [h_thread_parent h_fork_child]].
+        assert (k0 < length s) as h_k0_lt.
+        {
+          assert (k0 < length (s • (fork_thread, Fork parent))) as h_k0_lt_app.
+          {
+            apply (@lift_nth_error_defined_left Event.t action k0 (@snd threadId action)
+                   (s • (fork_thread, Fork parent))).
+            exists (Fork child); exact h_fork_child.
+          }
+          destruct (Compare_dec.lt_eq_lt_dec k0 (length s)) as [[h_k0_lt | h_k0_eq] | h_k0_gt].
+          - exact h_k0_lt.
+          - subst k0.
+            exfalso.
+            rewrite threadId_of_last in h_thread_parent.
+            rewrite action_of_last in h_fork_child.
+            injection h_thread_parent; injection h_fork_child; intros; subst.
+            apply (Nat.lt_irrefl (length s)).
+            eapply h_wf_fork.
+            + apply action_of_last.
+            + apply threadId_of_last.
+          - rewrite length_dot in h_k0_lt_app; lia.
+        }
+        assert (length s < k0) as h_last_lt_k0.
+        {
+          eapply h_wf_fork.
+          - apply action_of_last.
+          - exact h_thread_parent.
+        }
+        lia.
+      }
+      now constructor 2 with parent.
+  Qed.
 
 
   Fact tribe_se_s_not_open_fork :
@@ -278,24 +365,32 @@ Module Make ( Perm : MiniDecidableSet )
     inversion ht as [ ho | htc ] .
     - inversion ho;subst.
       assert (action_of (pi (length s) (s • (t0, Open p))) == Open p) as hlgt by
-        admit.
-         (* (autorewrite with nth_error;auto). *)
+        apply action_of_last.
       unfold wf_occurences in WF1;unfold occursAtMostOnce in WF1.
       assert (i = (length s)) as heq by now apply WF1 with (Open p).
       rewrite heq in HThreadOf.
-      admit. 
-      (* autorewrite  with nth_error in HThreadOf;auto. *)
+      rewrite threadId_of_last in HThreadOf.
+      injection HThreadOf; congruence.
     - 
       induction htc as [ i j t1 h_range h_owns |].
       + assert (action_of (pi (length s) (s • (t0, Open p))) == Open p) as h_pi_l by
-        admit.
-         (* (autorewrite with nth_error;auto). *)
+        apply action_of_last.
         assert (action_of (pi i (s • (t0, Open p))) == Open p) as h_pi_i by (inversion h_range;auto).
-        assert (k< length (s • (t0, Open p))) as h_lt_k by eauto with nth_error.
-        replace (length (s • (t0, Open p))) with (S (length s)) in h_lt_k by 
-          admit.
-          (* (autorewrite with length; simpl;lia). *)
-        assert (i < length s) as h_lt_i by lia.
+        destruct H0 as [h_i_k h_k_j].
+        assert (k< length (s • (t0, Open p))) as h_lt_k.
+        {
+          apply (@lift_nth_error_defined_left Event.t action k (@snd threadId action)
+                 (s • (t0, Open p))).
+          exists (Fork t'); exact H2.
+        }
+        rewrite length_dot in h_lt_k.
+        change (S k <= S (length s)) in h_lt_k.
+        apply le_S_n in h_lt_k.
+        assert (i < length s) as h_lt_i.
+        {
+          unfold lt.
+          eapply Nat.le_trans; eauto.
+        }
 
         unfold wf_occurences in WF1.
         unfold occursAtMostOnce in WF1.
@@ -304,15 +399,13 @@ Module Make ( Perm : MiniDecidableSet )
       + destruct (eq_nat_dec t1 t0) as [h_eq_t1t0 | h_neq_t1t0].
         * 
           assert (owns  (s • (t0, Open p)) p t0) as howns
-          by admit.
-            (* (constructor 1 with (length s);
-            autorewrite with nth_error;auto). *)
+          by (constructor 1 with (length s); [apply threadId_of_last | apply action_of_last]).
           assert (t0<>t1) as hneq by now apply  tribeChildren_notOwner with  (s • (t0, Open p)) p.
          
-          intuition.
-        * apply IHhtc;auto.
-        Admitted.
-  (* Qed. *)
+          intuition auto with *.
+        * apply IHhtc; auto.
+          constructor 2; assumption.
+  Qed.
 
   Lemma tribeChildren_after_open : 
   forall s,
@@ -380,28 +473,26 @@ Qed.
   forall s t p (HWFOcc : wf_occurences (s • (t, Open p))) t',
     tribeChildren (s • (t, Open p)) p t' -> False.
   Proof.
-    intros s t p HWFOcc t' H.
-    induction H; intros.
+    intros s t p HWFOcc t' Htc.
+    induction Htc as [i j owner Hrange Howns k child Hinterval Hthread Hfork
+                     | child parent Htc IH Hfather].
     - assert (i = length s); subst.
       {
-        assert (action_of (pi i (s • (t, Open p))) == Open p) by (inversion H; assumption).
+        assert (action_of (pi i (s • (t, Open p))) == Open p) by (inversion Hrange; assumption).
         assert (action_of (pi (length s) (s • (t, Open p))) == Open p) 
-               by admit. 
-                (* (autorewrite with nth_error; trivial). *)
+               by apply action_of_last.
         apply HWFOcc with (a:=Open p); auto.
       }
-      assert ( k <= length s).
-      {
-        assert (j < length (s • (t,Open p))) by (eapply range_j_lt_s; eauto).
-        assert (j < length s + 1) by 
-          admit. 
-          (* (autorewrite with length in *; simpl in *; trivial). *)
-        auto with *.
-      }
-      auto with *.
+      assert (j < length (s • (t, Open p))) as h_j_lt
+          by (eapply range_j_lt_s; eauto).
+      rewrite length_dot in h_j_lt.
+      apply le_S_n in h_j_lt.
+      destruct Hinterval as [h_i_k h_k_j].
+      assert (k <= length s) as h_k_le_s
+          by (eapply Nat.le_trans; eauto).
+      lia.
     - assumption.
-  Admitted.
-    (* Qed. *)
+  Qed.
   
   Fact tribeOpen_single :
   forall s t p (HWFOcc : wf_occurences (s • (t, Open p))) t',
@@ -409,11 +500,9 @@ Qed.
   Proof.
     intros s t0 p HWFOcc t'.
     assert (threadId_of (pi (length s) (s • (t0, Open p))) == t0) as Ha 
-           by admit. 
-            (* now autorewrite with nth_error. *)
+           by apply threadId_of_last.
     assert (action_of (pi (length s) (s • (t0, Open p))) == Open p) as Hb 
-           by admit. 
-           (* now autorewrite with nth_error. *)
+           by apply action_of_last.
     split; intros.
     - inversion H as [ Howns1 | ]. unfold wf_occurences, occursAtMostOnce in HWFOcc.
       + assert (owns (s • (t0, Open p)) p t0) as Howns2 by
@@ -421,23 +510,19 @@ Qed.
         inversion Howns1 as [ _1 i _2 Hi]; inversion Howns2 as [ _3 i' _4 Hi']; subst.
         assert (i = i') as Heq by firstorder.
         assert (Some t0 = Some t') by (rewrite <- Hi, <- Hi', Heq; trivial).
-        auto.
-        admit.
+        now injection H0.
       + exfalso; eapply tribeChildrenOpen_empty; eauto.
     - subst.
       constructor 1.
       assert (threadId_of (pi (length s) (s • (t', Open p))) == t') 
-             by admit.
-             (* (autorewrite with nth_error; trivial). *)
+             by apply threadId_of_last.
       assert (action_of (pi (length s) (s • (t', Open p))) == Open p) 
-             by admit. 
-             (* (autorewrite with nth_error; trivial). *)
+             by apply action_of_last.
       now apply owns_cons with (i := length s).
-  Admitted.
-        (* Qed. *)
+  Qed.
 
   Ltac pi_simpl:=
-    autorewrite with length in*; simpl in *; try(rewrite plus_comm, minus_plus in *);
+    autorewrite with length in*; simpl in *; try(rewrite Nat.add_comm, Nat.sub_add in *);
     autorewrite with nth_error in *; trivial.
 
  Lemma wellFormed_close_in_tribe :
@@ -448,40 +533,48 @@ Qed.
     constructor 1.
     inversion H as [ ? ? ? WFOpenClose _ _  _ ?].
     assert(action_of (pi (length s) (s • (t, Close p))) == Close p) as H' 
-      by admit.
-      (* pi_simpl. *)
+      by (unfold lift; rewrite pi_length_cons; reflexivity).
     specialize(WFOpenClose (length s) p H').
     destruct WFOpenClose as [j [ Hj [ Haction Hthreadid] ] ].
     exists j.
     assert(threadId_of (pi (length s) (s • (t, Close p))) == t) as H'' by 
-      admit. 
-      (* pi_simpl. *)
+      (unfold lift; rewrite pi_length_cons; reflexivity).
     rewrite <- H''. rewrite Hthreadid at 1. 
     now rewrite ListBasics.nth_error_append_left. trivial.
     rewrite <- Haction.
     now rewrite ListBasics.nth_error_append_left.
-    Admitted.
-  (* Qed. *)
+  Qed.
 
   Lemma wellFormedOpenFirst : 
     forall s t p, wellFormed (s • (t, Open p)) -> ~ occursIn s (Close p).
   Proof.
     intros s t0 p H.
-    intro.
-    assert (action_of (pi (length s) (s • (t0, Open p))) == Open p)
-           by admit. 
-           (* now autorewrite with nth_error. *)
-    inversion H0; subst.
-    inversion H.
-    assert (action_of (pi i (s • (t0, Open p))) == Close p) by auto with nth_error.
-    destruct (WF4 i p H2) as [i' [Hb [Hc Hd]]].
+    intro Hocc.
+    assert (action_of (pi (length s) (s • (t0, Open p))) == Open p) as Hlast
+        by apply action_of_last.
+    remember (Close p) as close_action eqn:h_close_action.
+    destruct Hocc as [i a Hclose].
+    subst a.
+    inversion H as [WF_occurences WF_fork WF_join WF_open_close
+                    WF_seq_order WF_join_see_fork WF_join_all_closed
+                    WF_mutualExclusion].
+    assert (i < length s) as h_i_lt.
+    {
+      apply (@lift_nth_error_defined_left Event.t action i (@snd threadId action) s).
+      exists (Close p); exact Hclose.
+    }
+    assert (action_of (pi i (s • (t0, Open p))) == Close p) as Hclose_app.
+    {
+      replace (pi i (s • (t0, Open p))) with (pi i s).
+      - assumption.
+      - symmetry; apply ListBasics.nth_error_append_left; assumption.
+    }
+    destruct (WF_open_close i p Hclose_app) as [i' [Hb [Hc Hd]]].
     assert (i' = length s) by
-           now (apply WF1 with (a:= Open p)).
+        (apply WF_occurences with (a:= Open p); [constructor | exact Hc | exact Hlast]).
     subst.
-    assert (i < length s) by eauto with nth_error.
-    auto with *.
-    Admitted.
-  (* Qed. *)
+    lia.
+  Qed.
 
  Fact tribeOpen : 
     forall s p t, tribe s p t -> occursIn s (Open p).
@@ -526,10 +619,8 @@ Qed.
       assert (length s < length s).
       {
         apply WF_fork with (t:=t').
-        admit.
-        admit.
-        (* autorewrite with nth_error; trivial.
-        autorewrite with nth_error; trivial. *)
+        - apply action_of_last.
+        - apply threadId_of_last.
       }
       auto with *.
     }
@@ -539,20 +630,17 @@ Qed.
              eauto with nth_error.
       assert (length s < i).
       {
-          admit.
-        (* apply WF_fork with (t0:=t).
-        autorewrite with nth_error; trivial.
-        assumption. *)
+        apply WF_fork with (t:=t).
+        - apply action_of_last.
+        - assumption.
       }
       exfalso; auto with *.  
     - assert(tribe (s • (t', Fork t)) p t') as Htribe.
       {
         assert(threadId_of (pi (length s) (s • (t', Fork t))) == t') by 
-          admit. 
-            (* pi_simpl. *)
+          apply threadId_of_last.
         assert(action_of (pi (length s) (s • (t', Fork t))) == Fork t) by 
-          admit. 
-          (* pi_simpl. *)
+          apply action_of_last.
         assert (father (s • (t', Fork t)) t t').
         {
           exists (length s); tauto.
@@ -572,8 +660,7 @@ Qed.
         }
         assert(tribeChildren s p t') by eauto using tribe_children_se_s_not_fork.
         now constructor 2.
-  (* Qed. *)
-  Admitted.
+  Qed.
 
   Lemma tribeB : 
     forall s e (HWFOcc : wf_occurences (s • e))
@@ -597,34 +684,38 @@ Qed.
     constructor 1 with (i:=i) (j:=length (s • (t', Fork t)) -1) (t:=t') (k:=length (s •(t',Fork t)) -1).
     - assumption.
     - apply owns_s_se; assumption.
-    - admit.
-      (* split; pi_simpl; try lia.
-      assert (action_of(pi i (s • (t', Fork t))) == Open p) by (inversion HRange; eauto).
-      destruct (Lt.le_or_lt i (length s)) as [H0|H0].
-      + apply Lt.le_lt_or_eq in H0.
-        destruct H0 as [H0 | H0].
-        * trivial.
-        * exfalso.
-          assert (action_of (pi (length s) (s • (t', Fork t)))==Fork t) 
-                 by (autorewrite with nth_error; trivial).
-          subst.
-          autorewrite with nth_error in *; simpl in *; discriminate.
-       + assert( i >= length (s • (t', Fork t))) by  (autorewrite with length;simpl;omega).
-         now rewrite ListBasics.nth_errorGeLength in H. 
-    - pi_simpl. 
-    - pi_simpl. *)
-    Admitted.
-  (* Qed. *)
+    - split.
+      + rewrite last_dot.
+        assert (action_of (pi i (s • (t', Fork t))) == Open p) as h_open
+            by (inversion HRange; subst; assumption).
+        assert (i < length (s • (t', Fork t))) as h_i_lt.
+        {
+          apply (@lift_nth_error_defined_left Event.t action i (@snd threadId action)
+                 (s • (t', Fork t))).
+          exists (Open p); exact h_open.
+        }
+        rewrite length_dot in h_i_lt.
+        assert (i <> length s) as h_i_neq.
+        {
+          intro; subst.
+          rewrite action_of_last in h_open.
+          discriminate.
+        }
+        lia.
+      + lia.
+    - rewrite last_dot; apply threadId_of_last.
+    - rewrite last_dot; apply action_of_last.
+  Qed.
 
   Lemma wf1 : 
     forall s t t', wf_fork (s • (t, Fork t')) -> t <> t'.
   Proof.
     intros; intro; subst.
-    apply (Lt.lt_irrefl (length s)).
-    apply H with (t:=t'); admit.
-    (* autorewrite with nth_error; trivial. *)
-  Admitted.
-    (* Qed. *)
+    apply (Nat.lt_irrefl (length s)).
+    apply H with (t:=t').
+    - unfold lift; rewrite pi_length_cons; reflexivity.
+    - unfold lift; rewrite pi_length_cons; reflexivity.
+  Qed.
 
   Lemma tribeD : 
     forall s p t t' (HWFOcc : wf_occurences (s • (t', Fork t)))
@@ -662,30 +753,26 @@ Qed.
         assert (k = length (s • (t', Fork t)) - 1). 
         {
           assert (action_of (pi (length s) (s • (t', Fork t))) == Fork t) 
-                 by admit. 
-                 (* (autorewrite with nth_error; trivial). *)
+              by apply action_of_last.
           assert (k = length s) by now (apply HWFOcc with (a:=Fork t)).
-          (* autorewrite with length. *)
-          admit.
-            (* simpl. lia. *)
+          rewrite last_dot.
+          assumption.
         }
         subst.
-        intuition.
+        intuition auto with *.
       + assert (t0=t').
         {
           assert (father (s • (t', Fork t)) t t').
           {
             exists (length s).
-            admit.
-            (* autorewrite with nth_error; simpl; auto. *)
+            split; [apply threadId_of_last | apply action_of_last].
           }
           eauto using father_functionnal.
         }
         subst.
         assert (owns (s • (t', Fork t)) p t') by auto with owns.
         eapply tribeExcl; eauto.
-        Admitted.
-  (* Qed. *)
+  Qed.
 
   Hint Resolve tribe_empty : tribe.
 
@@ -701,11 +788,11 @@ Module Type TribeT (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr)
-            ( O : OccurencesT Perm Address T V Tr P)
-            ( F : FatherT Perm Address T V Tr P O) 
-            ( OW : OwnsT Perm Address T V Tr P O)
-            ( R : RangeT Perm Address T V Tr P O).
-  Include (Make Perm Address T V Tr P O F OW R).
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod)
+            ( O : OccurencesT Perm Address T V TraceMod P)
+            ( F : FatherT Perm Address T V TraceMod P O) 
+            ( OW : OwnsT Perm Address T V TraceMod P O)
+            ( R : RangeT Perm Address T V TraceMod P O).
+  Include (Make Perm Address T V TraceMod P O F OW R).
 End TribeT.

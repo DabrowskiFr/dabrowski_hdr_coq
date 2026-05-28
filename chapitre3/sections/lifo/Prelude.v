@@ -1,10 +1,11 @@
-Require Import List.
+From Stdlib Require Import List.
 Require Import ListBasics.
-Require Import RelationClasses.
-Require Import Structures.Equalities.
-Require Import Lia.
-Require Import Bool ZArith OrderedType OrderedTypeEx FMapInterface FMapList FMapFacts. 
-Require Import Coq.Structures.DecidableTypeEx.
+From Stdlib Require Import RelationClasses.
+From Stdlib Require Import Structures.Equalities.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Bool ZArith OrderedType OrderedTypeEx FMapInterface FMapList FMapFacts. 
+From Stdlib Require Import Structures.DecidableTypeEx.
+From Stdlib Require Import Peano_dec.
 
 Class Inhabited (A:Type) (default:A) := {}.
 
@@ -83,27 +84,22 @@ Lemma nforalln_exists :
     forall n,
       not (forall x, x < n -> ~ P x) -> 
       exists x, P x.
-Proof.
-  intros P h_dec n h_nforall.
-  induction n; [intuition |].
-  Admitted.
-(*  destruct (h_dec n).
-  - (now exists n). 
-  - assert (~ (forall x, x < n -> ~ P x)).
-    {
-      intro h_n.
-      assert (forall x, x < S n -> ~ P x).
-      {
-        intros x h_lt;
-        destruct (Peano_dec.eq_nat_dec x n); [subst|]. 
-        - assumption.
-        - assert (x < n) by intuition. 
-          now apply h_n. 
-      }
-      now apply h_nforall .
-    }
-    now apply IHn. 
-Qed.*)
+  Proof.
+  intros P h_dec n.
+  induction n as [|m IHm]; intro h_nforall.
+  - exfalso.
+    apply h_nforall.
+    intros x Hlt; lia.
+  - destruct (h_dec m) as [HPm | HNPm].
+    + now exists m.
+    + apply IHm.
+      intro h_m.
+      apply h_nforall.
+      intros x Hlt.
+      destruct (eq_nat_dec x m) as [Heq | Hneq].
+      * now subst.
+      * apply h_m; lia.
+Qed.
 
 (******************************************************)
 (******************************************************)
@@ -145,12 +141,8 @@ Qed.
 
 Lemma nlt_neq_gt : forall n m, ~ n < m -> n <> m -> n > m.
 Proof.
-Admitted.
-  (* intros n m nlt_n_m neq_n_m.
-  destruct (le_lt_or_eq _ _ (nlt_le _ _ nlt_n_m)); 
-    [ assumption 
-    | exfalso; intuition].
-Qed. *)
+  lia.
+Qed.
 
 Hint Immediate nlt_le nlt_neq_gt : arith v62. 
 
@@ -355,15 +347,15 @@ Lemma lift_nth_error_append_right : (* énoncé précédent faux *)
   forall (A B : Type) (f : A -> B) (l1 l2 : list A) k,
     ~ (k < length l1) -> 
     lift f (nth_error (l1++l2) k) = lift f (nth_error l2 (k - length l1)).
-Proof.
+  Proof.
   intros A B f; induction l1 as [|x xs IH]; intros l2 k H.
   - simpl. rewrite Nat.sub_0_r. trivial.
   - destruct k. simpl in *.
-    + admit.
+    + exfalso; lia.
     + assert(not(k < length xs)) by (contradict H; simpl; auto with *).
       simpl. rewrite IH; [|assumption].
       trivial.
-Admitted.
+Qed.
 
 Ltac nth_error_rewrite Ha :=
   let Hb := fresh in 
@@ -424,11 +416,11 @@ Proof.
   destruct H' as [ x [H1 H2] ].
   apply in_map with (f:=f) in H2.
   apply sMaxNotInL in H2.
-  rewrite H1 in H2.
-  unfold max in H2.
-  contradict H2.
-  firstorder.
-  Admitted.
+  replace (f x) with (1 + max) in H2 by congruence.
+  fold max in H2.
+  change (1 + max) with (S max) in H2.
+  exact (Nat.nle_succ_diag_l max H2).
+Qed.
 
 Module Type Infinite (Import T:Typ). 
   Parameter infinite: infinite t.
@@ -539,5 +531,3 @@ Hint Extern 2 (length ?s - 1 < length ?s) => length_minus_nonEmpty s.
 
 
  Hint Resolve lt_le le_neq_lt length_minus_one length_se_s : arith.*)
-
-

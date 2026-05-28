@@ -1,20 +1,20 @@
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.ListBasics.
 
 Require Import sections.lifo.Prelude.
 Require Import sections.common.GenericTrace.
 Require Import sections.traces.Trace.
 Require Import sections.traces.Trace_Basics_projection.
-Require Import Lia.
+From Stdlib Require Import Lia.
 
 Module Make (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr).
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod).
 
-  Import Tr.
+  Import TraceMod.
   Import P.
   Hint Constructors occursIn occursAfter : myconstructors.
   Hint Constructors singleAction: myconstructors.
@@ -114,10 +114,18 @@ Module Make (Perm : MiniDecidableSet)
       occursIn s a'.
   Proof.
     intros s t a a' HOccursIn HNeq.
-    destruct HOccursIn as [i Hi]; eauto with nth_error.
-    admit.
-    Admitted.
-  (* Qed. *)
+    inversion HOccursIn as [i a'' Ha]; subst.
+    destruct (lt_eq_lt_dec i (length s)) as [[Hlt | Heq] | Hgt].
+    - exists i; eauto with nth_error.
+    - replace (pi i (s • (t, a))) with (Some (t, a)) in Ha.
+      + exfalso. unfold lift in Ha; simpl in Ha.
+        apply HNeq; inversion Ha; reflexivity.
+      + symmetry. replace i with (length s) by lia. apply pi_length_cons.
+    - assert (i >= length (s • (t, a))) by (rewrite length_app; simpl; lia).
+      replace (pi i (s • (t, a))) with (@None Event.t) in Ha.
+      + unfold lift in Ha; simpl in Ha; discriminate.
+      + symmetry; apply nth_errorGeLength; assumption.
+  Qed.
 
   Lemma occursAfter_se_s_neq : 
     forall s t a a' a'', 
@@ -151,13 +159,12 @@ Module Make (Perm : MiniDecidableSet)
       + subst. autorewrite with nth_error in Ha.
         inversion Ha.
         intuition.
-      + admit.
-        (* assert(i>=length((tr•e)•e')) by
-            (autorewrite with length in *; simpl in *; intuition).
-        rewrite nth_errorGeLength in Ha; trivial.
-        discriminate. *)
-  Admitted.
-  (* Qed. *)
+      + assert(i>=length((tr•e)•e')) by
+            (repeat rewrite length_app in *; simpl in *; lia).
+        replace (pi i ((tr•e)•e')) with (@None Event.t) in Ha.
+        * unfold lift in Ha; simpl in Ha; discriminate.
+        * symmetry; apply nth_errorGeLength; assumption.
+  Qed.
 
   Hint Resolve occursIn_s_se occursIn_se_s_neq : occurences.
 
@@ -237,16 +244,17 @@ Module Make (Perm : MiniDecidableSet)
       (HWFOpenClose : wf_open_close s) p p' p'', 
       precedes s p p' -> precedes s p' p'' -> precedes s p p''.
   Proof.
-    intros.
-    inversion H; inversion H0; subst.
-    assert (j < i0).
+    unfold precedes.
+    intros s HWFOcc HWFOpenClose p p' p'' Hpre Hpre'.
+    inversion Hpre as [i j ? Hlt Hclose Hopen]; subst.
+    inversion Hpre' as [i' j' ? Hlt' Hclose' Hopen']; subst.
+    assert (j < i').
     {
       edestruct HWFOpenClose as [i1 [Hb [Hc Hd]]]; eauto.
       assert (i1 = j) by singleOccurence; subst; assumption.
     }
-    unfold precedes; eauto using Nat.lt_trans.
-    Admitted.
-  (* Qed. *)
+    eapply occursAfter_cons with (i := i) (j := j'); [lia | eassumption | eassumption].
+  Qed.
   
   Lemma precedes_antisym : 
     forall s 
@@ -291,19 +299,18 @@ Module Make (Perm : MiniDecidableSet)
   Proof.
     intros s e a h_n_occurs h_e.
     intro h_occ.
-    destruct h_occ as [i a].
+    destruct h_occ as [i a0 Ha]; subst.
     destruct (lt_eq_lt_dec i (length s)) as [[h_lt | heq] | hgt].
-    - assert (action_of (pi i s ) == a) as Ha1 by eauto with nth_error.
+    - assert (action_of (pi i s ) == a0) as Ha1 by eauto with nth_error.
       contradict h_n_occurs.
       constructor 1 with i;auto.
     - rewrite heq in Ha.
       autorewrite with nth_error in Ha.
       contradict h_e.
-      auto.
-      admit.
+      now simpl in Ha; injection Ha.
     - assert (i< length  (s • e)) as hlt by eauto with nth_error.
-      admit.
-Admitted.
+      rewrite length_app in hlt; simpl in hlt; lia.
+Qed.
 
   Lemma notOccursIn_se_s :
     forall s e a,
@@ -327,7 +334,7 @@ Module Type OccurencesT (Perm : MiniDecidableSet)
             ( Export Address: DecidableInfiniteSet) 
             ( Export T : Type_.TYPE Address )
             ( Export V : Value.TYPE Address T ) 
-            ( Tr : Trace.T Perm Address T V)
-            ( P : Proj Perm Address T V Tr).
-  Include Make Perm Address T V Tr P.
+            ( TraceMod : Trace.T Perm Address T V)
+            ( P : Proj Perm Address T V TraceMod).
+  Include Make Perm Address T V TraceMod P.
 End OccurencesT.

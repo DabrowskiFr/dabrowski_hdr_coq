@@ -4,12 +4,12 @@ Require Import Syntax.
 Require Import Semantics.
 Require Import SemanticsTheory.
 Require Import Alignment.
-Require Import Coq.Program.Equality.
-Require Import Coq.Program.Basics.
-Require Import Coq.Relations.Relation_Operators.
-Require Import Lia.
-Require Import Utf8.
-Require Import List.
+From Stdlib Require Import Program.Equality.
+From Stdlib Require Import Program.Basics.
+From Stdlib Require Import Relations.Relation_Operators.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Utf8.
+From Stdlib Require Import List.
 Require Import Monad.
 
 Open Scope program_scope.
@@ -131,7 +131,7 @@ Module AlignmentTheory (Import P : Process) (Import V : Vector P).
         constructor 2.
         apply H.
       }
-      assert (@inl vconfiguration vstore vst ~= @inl vconfiguration vstore vst).
+      assert (JMeq (@inl vconfiguration vstore vst) (@inl vconfiguration vstore vst)).
       reflexivity.
       generalize (IHH_reachable _ _ _ H0 Hs' H1);
         intro.

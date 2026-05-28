@@ -1,6 +1,6 @@
-Require Import List.
+From Stdlib Require Import List.
 Require Import sections.lifo.ListBasics.
-Require Import Le Lt Peano_dec Compare_dec.
+From Stdlib Require Import Arith Peano_dec Compare_dec.
 Require Import sections.lifo.Prelude.
 Require Import sections.lifo.BijRel.
 

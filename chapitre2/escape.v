@@ -1,5 +1,5 @@
 Require Export counting_semantic_inv.
-Require Export List.
+From Stdlib Require Export List.
 Require Export remove_races.
 
 
@@ -70,7 +70,7 @@ Module MakeEscape (S:SEMANTIC) (CS:COUNTING_SEMANTIC with Module C := S.C).
     end.
 
   Definition return_point m i := 
-    exists j, exists ms, cflow m (j,i) /\ m.(body) j = Some (InvokeVirtual ms).
+    exists j, exists ms, cflow m (j,i) /\ body m j = Some (InvokeVirtual ms).
       
   Inductive well_formed : call_stack -> Prop :=
   | on_call_nil : well_formed nil
@@ -152,7 +152,7 @@ Module MakeEscape (S:SEMANTIC) (CS:COUNTING_SEMANTIC with Module C := S.C).
   Definition escape_typing (p:program) (Frs : abstract_frames) (E:abstract_escapes) := 
     forall m c,
       (labstract_escape nil (E (m,0,c))) /\    
-      (forall i j, cflow m (i,j) -> forall instr, m.(body) i = Some instr -> 
+      (forall i j, cflow m (i,j) -> forall instr, body m i = Some instr ->
         transfer_prop p (m,i,c) (Frs (m,i,c)) instr (E (m,i,c)) (E (m,j,c))).
 
   Lemma current_turn_1 : 
@@ -176,7 +176,7 @@ Module MakeEscape (S:SEMANTIC) (CS:COUNTING_SEMANTIC with Module C := S.C).
     rewrite H0 in Hd.
     destruct (loop p (cp_m, cp_i)).
     rewrite incr_lVect_eq in Hd.
-    omega.
+    lia.
     rewrite incr_lVect_diff; auto.
   Qed.    
   
@@ -690,6 +690,7 @@ Proof.
   destruct H2 as [l [T1 T2]].
   destruct T1; simpl in *; intuition.
   destruct H; congruence.
+  contradiction.
   (* main *)
   inv H'.
 
@@ -988,7 +989,7 @@ Proof.
   destruct H18.
   unfold line in *.
   rewrite <- H19 in H15.
-  omega.
+  lia.
 
   eapply reachable_local_coherency. 
   apply HReachable_state.
@@ -1367,11 +1368,11 @@ Import ML CPT PTR PT.
 
 Inductive LocalAccess (p:program) (E:abstract_escape) : PPT -> abstract_op_stack -> Prop :=  
   | LocalAccess_Put : forall m i c a1 a2 s f,
-    m.(body) i = Some (PutField f) ->
+    body m i = Some (PutField f) ->
     is_local p (m,i,c) a2 E ->
     LocalAccess p E (m,i,c) (a1::a2::s)
   | LocalAccess_Get : forall m i c a s f,
-    m.(body) i = Some (GetField f) ->
+    body m i = Some (GetField f) ->
     is_local p (m,i,c) a E ->
     LocalAccess p E (m,i,c) (a::s).
 
@@ -1538,4 +1539,3 @@ Proof.
 Qed.
 
 End MakeEscape.
-

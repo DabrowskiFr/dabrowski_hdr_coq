@@ -1,5 +1,5 @@
-Require Import Coq.Lists.List.
-Import Coq.Lists.List.ListNotations.
+From Stdlib Require Import Lists.List.
+Import ListNotations.
 
 Generalizable All Variables.
 

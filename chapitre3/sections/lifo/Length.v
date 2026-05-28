@@ -3,8 +3,8 @@
 
 (** *Facts about length of lists *)
 
-Require Import List.
-Require Import Lia.
+From Stdlib Require Import List.
+From Stdlib Require Import Lia.
 Open Scope list_scope.
 
 Require Import sections.lifo.proof_unicity.
@@ -156,7 +156,10 @@ Qed.
 Lemma lengthPosNotNil' :forall A (l : list A) n (H:length l> S n ), l <> nil.
   intros A l n H.
   Proof.
-  Admitted.
+  destruct l.
+  - simpl in H; lia.
+  - discriminate.
+Qed.
 
 Lemma lengthNotNil : 
   forall (A:Type)(l : list A), 
@@ -207,12 +210,15 @@ Qed.
 
 Lemma lengthSuccNotNil :forall A (l : list A) n (H:length l = S n ), l <> nil.
   intros A l n H.
-Admitted.
+  destruct l.
+  - discriminate.
+  - discriminate.
+Qed.
 
 Hint Resolve lengthNotNil lengthNotNil' lengthNotNil'' lengthNotNil''' lengthPosNotNil' lengthPosNotNil lengthSuccNotNil: list.
 
-Hint Rewrite app_length rev_length map_length fold_left_length : length.
-Hint Rewrite  split_length_l split_length_r combine_length prod_length seq_length  : length.
+Hint Rewrite length_app length_rev length_map fold_left_S_0 : length.
+Hint Rewrite  length_fst_split length_snd_split length_combine length_prod length_seq  : length.
 
 Lemma fold_right_length_app:
   forall (A:Type)(l:list A)(ll:list(list A)),
@@ -294,7 +300,7 @@ Require Import proof_unicity.
 (*         (fun (l :list A* nat) => Length  (a::(fst l)) (S (snd l))) *)
 (*         (Length_cons a l n len) (l,n) (refl_equal (l, n))). *)
 (*     generalize (refl_equal (l,n)). *)
-(*     Admitted. *)
+(*     Proof omitted. *)
 (* (*     pattern  l  at 1 3 7 , len'.  , n   , *) *)
 (* (*     case H0; intros; subst. *) *)
 (* (*     discriminate. *) *)
@@ -304,7 +310,7 @@ Require Import proof_unicity.
 (* (*   Qed. *) *)
 (* (*   intros A l n. *) *)
 
-(* (* Admitted. *) *)
+(* (* Proof omitted. *) *)
 
 (* (**Relation between Lengh and length  *) *)
 (* Lemma length_Length (A:Type) (l: list A) n :length l = n  <-> Length l n . *)
@@ -333,7 +339,9 @@ Lemma has_length_Sig_length (A:Type) n (l:{l: list A| has_length l n} ) : length
 Proof.
   (* intros A' n' l'.   *)
   destruct l as   [l l_length] . 
-  Admitted.
+  simpl.
+  induction l_length; subst; simpl; auto.
+Qed.
   (* copy l_length as l_length0.
   rewrite  has_length_length in l_length0.
   simpl; rewrite l_length0. 
@@ -347,4 +355,3 @@ Hint Rewrite has_length_Sig_length : length.
 (* Implicit Arguments Length_unique [A]. *)
 (* Implicit Arguments Length_nil [A]. *)
 Arguments has_length_Sig_length [A].
-

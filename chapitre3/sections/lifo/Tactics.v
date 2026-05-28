@@ -41,7 +41,7 @@ let if_left:=fresh "if_left" in let if_right:=fresh "if_right" in
     try (contradict if_left;reflexivity); try (destruct if_left;reflexivity)
     | try (contradict if_right;reflexivity);try (destruct if_right;reflexivity)].
 
-Require Import String.
+From Stdlib Require Import String.
 (** memorisation mecanism : enable kind of side effects  in Ltac  *)
 Inductive memo (s: String.string) : Prop :=
   mem  :  memo s
@@ -99,9 +99,6 @@ Tactic Notation "elim_ex" constr(e) integer(n):=
     end
     ).
 
-(** Admiting with a warning message  *)
-Ltac myadmit s1 s2 :=    
-  match goal with 
-    [|- ?G ] => 
-  idtac "Warning :  admit in file" s1".v, lemma" s2 "goal :" G
-  end ; admit.
+(** Disabled placeholder tactic. *)
+Ltac myadmit s1 s2 :=
+  fail 1 "myadmit is disabled" s1 s2.

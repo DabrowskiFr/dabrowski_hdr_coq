@@ -1,5 +1,5 @@
-Require Import List.
-Require Import Classes.EquivDec.
+From Stdlib Require Import List.
+From Stdlib Require Import Classes.EquivDec.
 
 Set Implicit Arguments.
 
@@ -26,5 +26,4 @@ Proof.
     discriminate.
     destruct(eqA a' a); intuition.
 Qed.
-
 

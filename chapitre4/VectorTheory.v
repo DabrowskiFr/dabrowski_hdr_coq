@@ -1,14 +1,13 @@
 Require Import Top.Vector.
-Require Import Lia.
-Require Import Coq.Program.Basics.
-Require Import Coq.Arith.Compare_dec.
-Require Import Utf8.
-Require Import Decidable.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Program.Basics.
+From Stdlib Require Import Arith.Compare_dec.
+From Stdlib Require Import Utf8.
+From Stdlib Require Import Decidable.
 Require Import Monad.
-Require Import Coq.Logic.FunctionalExtensionality.
-Require Import Coq.Arith.Peano_dec.
-Require Import Coq.Arith.PeanoNat.
-Require Import Coq.Arith.Le.
+From Stdlib Require Import Logic.FunctionalExtensionality.
+From Stdlib Require Import Arith.Peano_dec.
+From Stdlib Require Import Arith.PeanoNat.
 Require Import Prelude.
 Open Scope program_scope.
 
@@ -280,7 +279,7 @@ Module VectorTheory (Import P : Process) (Import V : Vector P).
                lia.
                assumption.
     }
-    destruct (H0 p (le_refl p));[left | right].
+    destruct (H0 p (Nat.le_refl p));[left | right].
     - destruct H1 as [i [HA HB]]; eauto.
     - contradict H1.
       destruct H1 as [i [x [HA HB]]].
@@ -323,7 +322,7 @@ Module VectorTheory (Import P : Process) (Import V : Vector P).
     case_eq (π i Σ); [intros a H__Eq | intros H__Eq] ; rewrite H__Eq in *; easy.
   Qed.
   
-  #[export] Hint Resolve vectmap_eq vectmap_some_rev vectmap_none_rev.
+  #[export] Hint Resolve vectmap_eq vectmap_some_rev vectmap_none_rev : core.
 
   Definition mapi (A B : Type) (f : nat -> A -> B) (v : t A) : t B :=
     fmap f (make id) <*> v.
@@ -392,7 +391,7 @@ Module VectorTheory (Import P : Process) (Import V : Vector P).
     now apply functional_extensionality.
   Qed.
 
-  #[export] Hint Unfold compose.
+  #[export] Hint Unfold compose : core.
   
   Lemma vectmap_compose : forall A B C (f : B -> C) (g : A -> B) (v : V.t A),
       fmap f (fmap g v) = fmap (f ∘ g) v.
@@ -417,15 +416,15 @@ Module VectorTheory (Import P : Process) (Import V : Vector P).
         + exists (vempty _ H1).
           intros i H__lt.
           exfalso; lia.
-        + assert (0 < S n) as HU by intuition.
+        + assert (0 < S n) as HU by lia.
           rewrite H1 in *.
           destruct (H 0 HU).
           exists (make (fun _ => x)).
           intros i H__lt2.
           exfalso; lia.
-      - assert (k <= p) as HV by intuition.
+      - assert (k <= p) as HV by lia.
         destruct (IHk HV) as [v' Hv'].
-        assert (k < p) by intuition.
+        assert (k < p) by lia.
         assert (exists y, π k v = Some (f y)) as [y Hy] by eauto.
         exists (mapi (fun i x => if i =? k then y else x) v').
         intros i H2.
@@ -460,7 +459,7 @@ Module VectorTheory (Import P : Process) (Import V : Vector P).
           rewrite Hx.
           intuition.
     }
-    destruct (H0 p (le_refl p)) as [v' Hv'].
+    destruct (H0 p (Nat.le_refl p)) as [v' Hv'].
     exists v'.
     now apply vect_extensionality.
   Qed.
@@ -595,14 +594,42 @@ Module VectorTheory (Import P : Process) (Import V : Vector P).
       (∀ x1 x2, f x1 x2 = f x2 x1) ->
       zip f v1 v2 = zip f v2 v1.
   Proof.
-    intros nprocs v1 v2.
-  Admitted.
+    intros A B v1 v2 f Hcomm.
+    destruct (zip f v1 v2) as [v|] eqn:Hzip1.
+    - assert (zip f v2 v1 = Some v) as Hzip2.
+      {
+        apply zip_prop.
+        intros i Hi.
+        destruct (proj1 (zip_prop _ _ _ f v1 v2 v) Hzip1 i Hi)
+          as [x1 [x2 [y [Hx1 [Hx2 [Hy Hf]]]]]].
+        exists x2, x1, y.
+        repeat split; try assumption.
+        rewrite Hcomm.
+        assumption.
+      }
+      congruence.
+    - destruct (zip f v2 v1) as [v|] eqn:Hzip2; [| reflexivity].
+      assert (zip f v1 v2 = Some v) as Hzip1'.
+      {
+        apply zip_prop.
+        intros i Hi.
+        destruct (proj1 (zip_prop _ _ _ f v2 v1 v) Hzip2 i Hi)
+          as [x1 [x2 [y [Hx1 [Hx2 [Hy Hf]]]]]].
+        exists x2, x1, y.
+        repeat split; try assumption.
+        rewrite Hcomm.
+        assumption.
+      }
+      congruence.
+  Qed.
 
     Lemma extrev: 
     ∀ A (v v' : t A),
       v = v' -> (∀ i, i < p → π i v = π i v').
   Proof.
-  Admitted.
+    intros A v v' H i _.
+    now subst.
+  Qed.
 
   Lemma fmap_some_inj : 
   forall A (x y : t A),

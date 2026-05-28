@@ -1,5 +1,5 @@
 Require Export counting_semantic.
-Require Export Bool.
+From Stdlib Require Export Bool.
 
 Module Types (S:COUNTING_SEMANTIC).
 
@@ -358,7 +358,7 @@ Definition transfer_cond p (cg:method -> mcontext -> Prop) M Frs Sigma :=
   forall m c i j instr,
     cg m c -> 
     cflow m (i,j) -> 
-    m.(body) i = Some instr ->
+    body m i = Some instr ->
     transfer_prop p M Sigma (m,i,c) instr
     (kill_flow_frame m c (i,j) (Frs (m,i,c)))
     (Frs (m,j,c)).
@@ -373,13 +373,13 @@ Definition invoke_cond (M:abstract_signatures) Frs :=
 Definition return_cond (M:abstract_signatures) := 
   forall m c args rtype,
       M m c = (args,rtype) ->
-      forall i, m.(body) i = Some Return ->
+      forall i, body m i = Some Return ->
         rtype=None.
 
 Definition areturn_cond (M:abstract_signatures) (Frs:abstract_frames) :=
   forall m c  args rtype,
       M m c =(args,rtype) ->
-      forall i, m.(body) i = Some AReturn ->
+      forall i, body m i = Some AReturn ->
         exists al',
           rtype = Some al'
           /\ forall Os Gamma, Frs (m,i,c)=(Os,Gamma) ->

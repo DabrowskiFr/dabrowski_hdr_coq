@@ -1,8 +1,8 @@
-Require Import List.
-Require Import Program.
+From Stdlib Require Import List.
+From Stdlib Require Import Program.
 Require Import sections.lifo.AlgebraClasses.
 Require Import sections.lifo.AlgebraInstances.
-Require Import Coq.Relations.Relation_Definitions.
+From Stdlib Require Import Relations.Relation_Definitions.
 Set Implicit Arguments.
 
 (** Removing the Some constructor  *)
@@ -212,17 +212,15 @@ Qed.
     forall A f (e : option A) i, 
       optionify' f e (Some i) <> None.
   Proof.
-  Admitted.
-    (* destruct e; firstorder.
-  Qed. *)
+    unfold optionify'; destruct e; simpl; discriminate.
+  Qed.
 
   Lemma optionify'_some2  :
     forall A f (e : option A) i, 
       optionify' f (Some i)  e <> None.
   Proof.
-  Admitted.
-    (* destruct e; firstorder.
-  Qed. *)
+    unfold optionify'; destruct e; simpl; discriminate.
+  Qed.
 
   Import Morphisms.
 

@@ -1,6 +1,6 @@
 Require Import Monad.
-Require Import List.
-Require Import Utf8.
+From Stdlib Require Import List.
+From Stdlib Require Import Utf8.
 
 Open Scope functor_scope.
 

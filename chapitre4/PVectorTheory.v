@@ -2,12 +2,13 @@ Require Import Vector.
 Require Import VectorTheory.
 Require Import PVector.
 Require Import Monad.
-Require Import Utf8.
-Require Import Lia.
-Require Import Bool.
-Require Import Decidable.
-Require Import Coq.Classes.RelationClasses.
-Require Import FunctionalExtensionality.
+From Stdlib Require Import Utf8.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Bool.
+From Stdlib Require Import Decidable.
+From Stdlib Require Import Arith.Compare_dec.
+From Stdlib Require Import Classes.RelationClasses.
+From Stdlib Require Import Logic.FunctionalExtensionality.
 
 Open Scope monad_scope.
 
@@ -131,19 +132,17 @@ Module PVectorTheory (Import P : Process) (Import V : Vector P).
     intros A v v' H i.
     split; intros H0.
     - assert (i < p) by eauto with vector.
-      destruct (H i H1).
-      apply undefined in H0.
-      apply undefined. 
-      assumption.
-      tauto.
-      assumption.
+      destruct (H i H1) as [_ Hback].
+      apply (proj1 (undefined _ v' i H1)).
+      intro Hdefined.
+      apply (proj2 (undefined _ v i H1) H0).
+      now apply Hback.
     - assert (i < p) by eauto with vector.
-      destruct (H i H1).
-      apply undefined in H0.
-      apply undefined.
-      assumption.
-      tauto.
-      assumption.
+      destruct (H i H1) as [Hforward _].
+      apply (proj1 (undefined _ v i H1)).
+      intro Hdefined.
+      apply (proj2 (undefined _ v' i H1) H0).
+      now apply Hforward.
   Qed.
     
   Lemma compatible_empty : forall A (v v' : V.t (option A)),
@@ -403,7 +402,15 @@ Module PVectorTheory (Import P : Process) (Import V : Vector P).
       merge v1 v2 = Some v ->
       ∀ i, defined v1 i -> ¬ defined v2 i.
   Proof.
-  Admitted.
+    intros A v1 v2 v Hmerge i [x Hx] [y Hy].
+    assert (i < p) by eauto with vector.
+    pose proof (π_merge _ _ _ _ _ Hmerge H) as Hpi.
+    destruct (π_prop2 _ v i H) as [z Hz].
+    rewrite Hx, Hy in Hpi.
+    rewrite Hz in Hpi.
+    unfold liftA2 in Hpi; simpl in Hpi.
+    discriminate Hpi.
+  Qed.
   
   Lemma merge_defined : forall A (v1 v2 v : V.t (option A)) i,
       merge v1 v2 = Some v ->
@@ -430,21 +437,70 @@ Module PVectorTheory (Import P : Process) (Import V : Vector P).
       merge v1 v2 = Some v ->
       ¬ defined v i -> π i v = π i v2.
   Proof.
-  Admitted.
+    intros A v1 v2 v i Hmerge Hundef.
+    destruct (lt_dec i p) as [Hi|Hi].
+    - assert (π i v = Some None) as Hvnone.
+      {
+        apply undefined.
+        assumption.
+        assumption.
+      }
+      pose proof (π_merge _ _ _ _ _ Hmerge Hi) as Hpi.
+      rewrite Hvnone in Hpi.
+      destruct (π i v1) as [[x1|]|] eqn:Hv1;
+        destruct (π i v2) as [[x2|]|] eqn:Hv2;
+        unfold liftA2 in Hpi; simpl in Hpi; try discriminate;
+        rewrite Hvnone; reflexivity.
+    - assert (π i v = None) as Hvnone.
+      {
+        destruct (π i v) eqn:Hv; [| reflexivity].
+        assert (i < p) by eauto with vector.
+        lia.
+      }
+      assert (π i v2 = None) as Hv2none.
+      {
+        destruct (π i v2) eqn:Hv2; [| reflexivity].
+        assert (i < p) by eauto with vector.
+        lia.
+      }
+      now rewrite Hvnone, Hv2none.
+  Qed.
 
   Lemma merge_allnone :
     ∀ A (v : t (option A)), merge v (make (fun _ => None)) = Some v.
   Proof.
-  Admitted.
+    intros A v.
+    unfold merge.
+    apply zip_prop.
+    intros i Hi.
+    destruct (π_prop2 _ v i Hi) as [x Hx].
+    exists x, None, x.
+    repeat split; try assumption.
+    - now rewrite π_make.
+    - unfold oplus.
+      now destruct x.
+  Qed.
 
   
   Lemma merge_empty : forall A (v1 : V.t (option A)),
       empty v1 -> forall v2, merge v1 v2 = Some v2.
   Proof.
-    intros v1 H v2.
-    unfold empty in H.
+    intros A v1 Hempty v2.
     unfold merge.
-  Admitted.
+    apply zip_prop.
+    intros i Hi.
+    assert (π i v1 = Some None) as Hv1.
+    {
+      apply undefined.
+      assumption.
+      now apply Hempty.
+    }
+    destruct (π_prop2 _ v2 i Hi) as [x2 Hx2].
+    exists None, x2, x2.
+    repeat split; try assumption.
+    unfold oplus.
+    now destruct x2.
+  Qed.
   (*apply V.zip_prop2.
     intros i H0.
     destruct (H i H0) as [x [HA HB]].
@@ -478,29 +534,47 @@ Module PVectorTheory (Import P : Process) (Import V : Vector P).
     ∀ (A : Type) (X : option A),
       oplus X None = Some X.
   Proof.
-  Admitted.
+    intros A X.
+    now destruct X.
+  Qed.
 
   Lemma merge_full : forall A (v1 v2 : V.t (option A)),
       full v1 -> merge v1 v2 = Some v1 \/ merge v1 v2 = None.
   Proof.
-  Admitted.
+    intros A v1 v2 Hfull.
+    destruct (merge v1 v2) as [v|] eqn:Hmerge.
+    - left.
+      assert (v = v1) as ->.
+      {
+        apply vect_extensionality.
+        intros i Hi.
+        apply merge_defined with (v2 := v2).
+        - assumption.
+        - now apply Hfull.
+      }
+      reflexivity.
+    - right; reflexivity.
+  Qed.
 
   Lemma merge_full2 : forall A (v1 v2 : V.t (option A)),
   full v2 -> merge v1 v2 = Some v2 \/ merge v1 v2 = None.
 Proof.
-Admitted.
+  intros A v1 v2 Hfull.
+  rewrite merge_sym.
+  now apply merge_full.
+Qed.
 
 
 (*
   Lemma merge_total_empty : forall A (v1 v2 v : V.t (option A)),
       merge v1 v2 = Some v -> full v1 -> empty v2.
   Proof.
-  Admitted.*)
+  Qed.*)
 (*  
   Lemma merge_full__ : forall A (v1 : V.t (option A)),
       full v1 -> forall v2, (exists v, merge v1 v2 = Some v) -> empty v2.
   Proof.
-  Admitted.*)
+  Qed.*)
 (*
   
     intros n v1 H v2 H0.
@@ -522,17 +596,132 @@ Admitted.
   Qed.
  *)
   
-  Lemma merge_coherent : ∀ A (v1 v2 : t (option A)),
-      merge v1 v2 <> None -> coherent v1 v2.
+  Lemma merge_disjoint : ∀ A (v1 v2 : t (option A)),
+      merge v1 v2 <> None -> ∀ i, defined v1 i -> ¬ defined v2 i.
   Proof.
-  Admitted.
+    intros A v1 v2 Hmerge i Hdefined.
+    destruct (merge v1 v2) as [v|] eqn:Hmerge_eq.
+    - eapply merge_exclusive; eauto.
+    - contradiction.
+  Qed.
   
   Lemma fork_join : forall A (f : nat -> A -> bool) (v v1 v2 : V.t (option A)),
       (select f v) ⋕ v1 ->
       (select (fun i n => negb (f i n)) v) ⋕ v2 ->
       exists v', merge v1 v2 = Some v' /\ v ⋕ v'.
   Proof.
-  Admitted.
+    intros A f v v1 v2 Hcompat1 Hcompat2.
+    assert (Hpoint :
+              ∀ i, i < p ->
+              ∃ y : option A,
+                ∃ x1 x2,
+                  π i v1 = Some x1 /\
+                  π i v2 = Some x2 /\
+                  oplus x1 x2 = Some y).
+    {
+      intros i Hi.
+      destruct (π_prop2 _ v1 i Hi) as [x1 Hx1].
+      destruct (π_prop2 _ v2 i Hi) as [x2 Hx2].
+      destruct x1 as [a1|], x2 as [a2|].
+      - exfalso.
+        assert (defined (select f v) i) as Hsel1.
+        {
+          destruct (Hcompat1 i Hi) as [_ Hback].
+          apply Hback.
+          exists a1; assumption.
+        }
+        assert (defined (select (fun i n => negb (f i n)) v) i) as Hsel2.
+        {
+          destruct (Hcompat2 i Hi) as [_ Hback].
+          apply Hback.
+          exists a2; assumption.
+        }
+        destruct Hsel1 as [b1 Hb1].
+        destruct Hsel2 as [b2 Hb2].
+        destruct (select_true_rev _ _ _ _ _ Hb1) as [Hf Hv1].
+        destruct (select_true_rev _ _ _ _ _ Hb2) as [Hnf Hv2].
+        injection (eq_trans (eq_sym Hv1) Hv2); intro; subst.
+        simpl in Hnf.
+        now rewrite Hf in Hnf.
+      - exists (Some a1), (Some a1), None.
+        repeat split; try assumption.
+      - exists (Some a2), None, (Some a2).
+        repeat split; try assumption.
+      - exists None, None, None.
+        repeat split; try assumption.
+    }
+    destruct (vect_forall _ _ Hpoint) as [v' Hv'].
+    exists v'.
+    split.
+    - unfold merge.
+      apply zip_prop.
+      intros i Hi.
+      destruct (Hv' i Hi) as [y [Hy [x1 [x2 [Hx1 [Hx2 Hop]]]]]].
+      exists x1, x2, y.
+      repeat split; assumption.
+    - unfold compatible.
+      intros i Hi.
+      split.
+      + intros [x Hx].
+        destruct (Hv' i Hi) as [y [Hy [x1 [x2 [Hx1 [Hx2 Hop]]]]]].
+        destruct (f i x) eqn:Hfx.
+        * destruct (Hcompat1 i Hi) as [Hforward _].
+          assert (defined v1 i) as Hv1.
+          {
+            apply Hforward.
+            exists x.
+            rewrite select_true with (x := x).
+            - assumption.
+            - assumption.
+            - assumption.
+          }
+          destruct Hv1 as [a Ha].
+          replace x1 with (Some a) in * by congruence.
+          destruct x2 as [b|]; simpl in Hop; try discriminate.
+          injection Hop; intro; subst.
+          exists a; assumption.
+        * destruct (Hcompat2 i Hi) as [Hforward _].
+          assert (defined v2 i) as Hv2.
+          {
+            apply Hforward.
+            exists x.
+            rewrite select_true with (x := x).
+            - assumption.
+            - assumption.
+            - simpl.
+              now rewrite Hfx.
+          }
+          destruct Hv2 as [a Ha].
+          replace x2 with (Some a) in * by congruence.
+          destruct x1 as [b|]; simpl in Hop; try discriminate.
+          injection Hop; intro; subst.
+          exists a; assumption.
+      + intros [x Hx].
+        destruct (Hv' i Hi) as [y [Hy [x1 [x2 [Hx1 [Hx2 Hop]]]]]].
+        rewrite Hx in Hy.
+        injection Hy; intro; subst.
+        destruct x1 as [a1|], x2 as [a2|]; unfold oplus in Hop; simpl in Hop.
+        * discriminate Hop.
+        * destruct (Hcompat1 i Hi) as [_ Hback].
+          assert (defined (select f v) i) as Hsel.
+          {
+            apply Hback.
+            exists a1; assumption.
+          }
+          destruct Hsel as [a Ha].
+          destruct (select_true_rev _ _ _ _ _ Ha) as [_ Hv].
+          exists a; assumption.
+        * destruct (Hcompat2 i Hi) as [_ Hback].
+          assert (defined (select (fun i n => negb (f i n)) v) i) as Hsel.
+          {
+            apply Hback.
+            exists a2; assumption.
+          }
+          destruct Hsel as [a Ha].
+          destruct (select_true_rev _ _ _ _ _ Ha) as [_ Hv].
+          exists a; assumption.
+        * discriminate Hop.
+  Qed.
 
    (** ** fmap *)
 

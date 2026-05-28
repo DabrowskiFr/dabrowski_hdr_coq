@@ -1,6 +1,6 @@
-Require Import Nat.
-Require Import Arith.
-Require Import Lia.
+From Stdlib Require Import Nat.
+From Stdlib Require Import Arith.
+From Stdlib Require Import Lia.
 
 (** [min x y] can be written [x - (x - y)] as we compute over natural numbers *)
 Lemma min_minus x y: min x y = x - (x - y).

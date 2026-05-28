@@ -1,4 +1,4 @@
-Require Import Relation_Operators Operators_Properties Wf_nat Arith Lia.
+From Stdlib Require Import Relation_Operators Operators_Properties Wf_nat Arith Lia.
 From sections.lifo Require Import Prelude ListBasics. 
 From sections.traces Require Import Trace_Theory.
 

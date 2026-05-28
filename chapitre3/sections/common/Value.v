@@ -1,9 +1,9 @@
-Require Import ZArith.
-Require Import Bool.
-Require Import Coq.ZArith.BinInt.
+From Stdlib Require Import ZArith.
+From Stdlib Require Import Bool.
+From Stdlib Require Import ZArith.BinInt.
 Require Import sections.lifo.Prelude.
 Require Import Type_.
-Require Import Logic.Eqdep_dec.
+From Stdlib Require Import Logic.Eqdep_dec.
 
 Module Type TYPE ( Import Address: DecidableInfiniteSet) 
                  ( Import T : Type_.TYPE ( Address ) ).
@@ -35,20 +35,19 @@ Module Type TYPE ( Import Address: DecidableInfiniteSet)
   Proof.
     destruct e; destruct e'; destruct ty; destruct ty0; simpl in *; 
                 try (right; intro; discriminate).
-    case_eq(Peano_dec.eq_nat_dec v v0); intros eq H; [ 
-    left; auto |
-    right; intro H'; apply ValueInj in H'; intuition ].
-    Admitted.
-    (* case_eq(Z_eq_dec v v0); intros eq H; [ 
-    left; rewrite eq; auto |
-    right; intro H'; apply ValueInj in H'; intuition ].
-    case_eq(Bool.bool_dec v v0); intros eq H; [ 
-    left; rewrite eq; auto |
-    right; intro H'; apply ValueInj in H'; intuition ].
-    case_eq(Address.eq_dec v v0); intros eq H; [ 
-    left; rewrite eq; auto |
-    right; intro H'; apply ValueInj in H'; intuition ].
-  Qed. *)
+    - destruct (Peano_dec.eq_nat_dec v v0) as [eq | neq].
+      + subst; left; reflexivity.
+      + right; intro H'; apply ValueInj in H'; contradiction.
+    - destruct (Z.eq_dec v v0) as [eq | neq].
+      + subst; left; reflexivity.
+      + right; intro H'; apply ValueInj in H'; contradiction.
+    - destruct (Bool.bool_dec v v0) as [eq | neq].
+      + subst; left; reflexivity.
+      + right; intro H'; apply ValueInj in H'; contradiction.
+    - destruct (Address.eq_dec v v0) as [eq | neq].
+      + subst; left; reflexivity.
+      + right; intro H'; apply ValueInj in H'; contradiction.
+  Qed.
     
   Definition intToValue (n : Z) : t := Value T.Number n.
   Definition boolToValue (b : bool) : t := Value T.Boolean b.

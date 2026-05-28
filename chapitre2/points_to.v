@@ -16,7 +16,7 @@ Notation "X <=l Y" := (incl_func _ X Y) (at level 10).
 
 Definition singleton (A:Set) (x:A) : A -> Prop :=
   fun y => x=y.
-Implicit Arguments singleton [A].
+Arguments singleton {A} _ _.
 
 Module MakePointsTo (S:SEMANTIC).
 
@@ -393,13 +393,13 @@ Section PointsTo.
     apply H20; auto.
     apply HCall with (cid:=c_name C); auto.
     destruct (le_gt_dec (Datatypes.S z) (length args)).
-    rewrite H10 in Hz; try omega.
+    rewrite H10 in Hz; try lia.
     simpl in H21.
     elim (gamma_list_nth_Null _ _ G1) with (1:=Hz).
     intros Q [B1 B2].
     apply (H21 (snd o')) with Q; auto.
     apply HCall with (cid:=c_name C); auto.
-    rewrite H11 in Hz; try discriminate; omega.
+    rewrite H11 in Hz; try discriminate; lia.
 
     replace (length (prog_syntax.args (signature m1))) with (length v_list).
     constructor 2 with cl (c_name C) (signature m1); auto.
@@ -476,7 +476,7 @@ Section PointsTo.
     inv T; auto.
     eapply H; eauto.
   Qed.
-  Hint Resolve gamma_thread_upd.
+  Hint Resolve gamma_thread_upd : core.
 
   Lemma step3_correct : forall L o cs sigma mu L' sigma' mu' a,
     PointsTo ->
@@ -731,4 +731,3 @@ End PointsTo.
   Qed.
 
 End MakePointsTo.
-

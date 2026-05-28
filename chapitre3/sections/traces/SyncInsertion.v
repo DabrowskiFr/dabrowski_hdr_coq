@@ -1,10 +1,11 @@
-Require Import Relation_Operators Operators_Properties Wf_nat.
+From Stdlib Require Import Relation_Operators Operators_Properties Wf_nat.
 Require Import sections.lifo.Prelude sections.traces.Trace_Theory.
 Require Import sections.traces.EquivalenceTheory.
 Require Import sections.common.Insertion.
-Require Import List sections.lifo.ListBasics.
+From Stdlib Require Import List.
+Require Import sections.lifo.ListBasics.
 Require Import sections.lifo.BijRel.
-Require Import Lia. 
+From Stdlib Require Import Lia. 
 Require Import sections.lifo.Length.
 
 Module Make (P : MiniDecidableSet)
@@ -248,7 +249,7 @@ Module Make (P : MiniDecidableSet)
     }
     assert (exists i1, insertion_rel i (length s) i0 i1) as [i1 h_i1].
     {
-      assert (i0 < S (length s)) as h_lt by intuition.
+      assert (i0 < S (length s)) as h_lt by intuition auto with *.
       assert (applicative (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
       {
         assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
@@ -258,7 +259,7 @@ Module Make (P : MiniDecidableSet)
     }
     assert (exists k1, insertion_rel i (length s) k k1) as [k1 h_k1].
     {
-      assert (k < S (length s)) as h_lt by intuition.
+      assert (k < S (length s)) as h_lt by intuition auto with *.
       assert (applicative (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
       {
         assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
@@ -268,7 +269,7 @@ Module Make (P : MiniDecidableSet)
     }
     assert (exists j1, insertion_rel i (length s) j j1) as [j1 h_j1].
     {
-      assert (k < S (length s)) as h_lt by intuition.
+      assert (k < S (length s)) as h_lt by intuition auto with *.
       assert (applicative (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
       {
         assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
@@ -301,10 +302,10 @@ Module Make (P : MiniDecidableSet)
             assert (synchronizeWith (s • (t0,a)) i0 (length s)).
             {
               constructor 1.
-              constructor 1 with t1; intuition. 
+              constructor 1 with t1; intuition auto with *. 
             }
             destruct (Compare_dec.lt_dec i0 i); [assumption|].
-            elim (H2 i0); intuition. 
+            elim (H2 i0); intuition auto with *. 
           }
           assert (i0 = i1).
           {
@@ -314,7 +315,7 @@ Module Make (P : MiniDecidableSet)
           congruence.
         - assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
           eapply insertion_order; eauto.
-          intuition.
+          intuition auto with *.
       }
       assert (k1 <= length s' - 1).
       {
@@ -323,10 +324,10 @@ Module Make (P : MiniDecidableSet)
         assumption.
         assumption.
         replace (length s') with (S (length s)).
-        intuition.
+        intuition auto with *.
         eapply insertion_length; eauto.
       }
-      intuition.
+      intuition auto with *.
     }
     assert (owns s' p t1) by (eapply insertion_owns; eauto).
     assert (pi k1 s' == (t1, Fork t')) as h_eq.
@@ -350,7 +351,7 @@ Module Make (P : MiniDecidableSet)
           {
             assert (j < length (s • (t0,a))) as h_lt by eauto with nth_error.
             autorewrite with length in h_lt; simpl in h_lt.
-            intuition.
+            intuition auto with *.
           }
           subst.
           rewrite H7 in Hj.
@@ -406,12 +407,12 @@ Module Make (P : MiniDecidableSet)
               subst.
               constructor 1.
               constructor 1 with t1.
-              intuition.
+              intuition auto with *.
               assumption.
               autorewrite with nth_error; reflexivity.
             }
             destruct (Compare_dec.lt_dec k i); [assumption|].
-            assert (i <= k < length s) by intuition.
+            assert (i <= k < length s) by intuition auto with *.
             elim (H2 k); eauto.
           }
           assert (k = k1).
@@ -423,7 +424,7 @@ Module Make (P : MiniDecidableSet)
           assert (i0 = i1).
           {
             assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
-            apply insertion_rel_fst_left with i (length s); intuition.
+            apply insertion_rel_fst_left with i (length s); intuition auto with *.
           }
           subst.
           assert (t0 = t1).
@@ -455,7 +456,7 @@ Module Make (P : MiniDecidableSet)
           assumption.
           assumption.
           eapply insertion_owns; eauto.
-          intuition.
+          intuition auto with *.
           unfold Event.t in *; rewrite H11; reflexivity.
           unfold Event.t in *; rewrite H11; reflexivity.
         * constructor 1 with i1 (length s' - 1) t1 k1.
@@ -471,7 +472,7 @@ Module Make (P : MiniDecidableSet)
           unfold Event.t in *; rewrite H11; reflexivity.
       +   assert (action_of (pi j (s • (t0, a))) == Close p).
           {
-            assert (j < length s) by intuition.
+            assert (j < length s) by intuition auto with *.
             inversion H3; subst.
             assumption.
             autorewrite with length in H12; simpl in H12.
@@ -487,7 +488,7 @@ Module Make (P : MiniDecidableSet)
           unfold Event.t in *; congruence.
           eapply insertion_owns; eauto.
           split.
-          intuition.
+          intuition auto with *.
           assert (k1 < j1).
           {
             destruct (Peano_dec.eq_nat_dec k j).
@@ -501,10 +502,10 @@ Module Make (P : MiniDecidableSet)
             assumption.
             assumption.
             assumption.
-            intuition.
+            intuition auto with *.
             assumption.
           }
-          intuition.
+          intuition auto with *.
           unfold Event.t in *; rewrite H11; reflexivity.
           unfold Event.t in *; rewrite H11; reflexivity.
     - constructor 2 with t1.
@@ -530,12 +531,12 @@ Module Make (P : MiniDecidableSet)
         inversion H; subst.
         eauto with nth_error.
         destruct s'; [ destruct k; simpl in *; discriminate |].
-        intuition.
+        intuition auto with *.
       }
       assert (S (length s) = length s') by now apply insertion_length with i (t0,a).
       assert (exists i1, insertion_rel i (length s) i1 i0) as [i1 h_i1].
       {
-        assert (i0 < length s') as h_lt by intuition.
+        assert (i0 < length s') as h_lt by intuition auto with *.
         assert (surjective (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
         {
           assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
@@ -545,17 +546,17 @@ Module Make (P : MiniDecidableSet)
       }
       assert (exists k1, insertion_rel i (length s) k1 k) as [k1 h_k1].
       {
-        assert (i0 < length s') as h_lt by intuition.
+        assert (i0 < length s') as h_lt by intuition auto with *.
         assert (surjective (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
         {
           assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
           now destruct (insertion_rel_bijective _ _ h_lt2).
         }
-        apply h_app; intuition.
+        apply h_app; intuition auto with *.
       }
       assert (exists j1, insertion_rel i (length s) j1 j) as [j1 h_j1].
       {
-        assert (i0 < length s') as h_lt by intuition.
+        assert (i0 < length s') as h_lt by intuition auto with *.
         assert (surjective (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
         {
           assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
@@ -597,23 +598,23 @@ Module Make (P : MiniDecidableSet)
         assert (k1 < i1).
         {
           assert (k1 <> i1) by (intro; subst; rewrite h_i1b in h_k1b; discriminate).
-          intuition.
+          intuition auto with *.
         }
         destruct (Peano_dec.eq_nat_dec i1 (length s)).
         - subst.
           assert (i0 = i) by (eapply insertion_rel_fst_last; eauto).
           destruct (Compare_dec.lt_dec k1 i).
           + assert (k1 = k) by now apply insertion_rel_fst_left with i (length s).
-            subst; exfalso; intuition.
-          + assert (i <= k1 < length s) by intuition.
+            subst; exfalso; intuition auto with *.
+          + assert (i <= k1 < length s) by intuition auto with *.
             assert (synchronizeWith (s • (t0, a)) k1 (length s)).
             {
               constructor 1.
-              constructor 1 with t1; [intuition | rewrite h_k1b; reflexivity | rewrite h_i1b; reflexivity].
+              constructor 1 with t1; [intuition auto with * | rewrite h_k1b; reflexivity | rewrite h_i1b; reflexivity].
             }
             now elim (h_nosync k1).
         - assert (k < i0) by now apply insertion_order with i (length s) k1 i1.
-          exfalso; intuition.
+          exfalso; intuition auto with *.
       }
       
       inversion H; subst.
@@ -647,7 +648,7 @@ Module Make (P : MiniDecidableSet)
             assert (k1 <> j1).
             intro; subst.
             unfold Event.t in *; rewrite H8 in h_k1b; discriminate.
-            intuition.
+            intuition auto with *.
           }
           destruct (Peano_dec.eq_nat_dec k1 (length s)).
           - subst.
@@ -666,22 +667,22 @@ Module Make (P : MiniDecidableSet)
             assert (j1 < i).
             {
               destruct (Compare_dec.lt_dec j1 i);[assumption|].
-              elim (h_nosync j1); intuition.
+              elim (h_nosync j1); intuition auto with *.
             }
             assert (j1 = j).
             now apply insertion_rel_fst_left with i (length s).
             subst.
-            exfalso; intuition.
+            exfalso; intuition auto with *.
           - assert (j < k).
             now apply insertion_order with i (length s) j1 k1.
-            exfalso; intuition.
+            exfalso; intuition auto with *.
         }
         constructor 1 with i1 j1 t1 k1.
         constructor 1.
         unfold Event.t in *; rewrite h_i1b; reflexivity.
         unfold Event.t in *; rewrite H8; reflexivity.
         eapply insertion_owns_rev; eauto.
-        intuition.
+        intuition auto with *.
         unfold Event.t in *; rewrite h_k1b; reflexivity.
         unfold Event.t in *; rewrite h_k1b; reflexivity.
       + constructor 1 with i1 (length (s • (t0,a)) - 1) t1 k1.
@@ -691,10 +692,10 @@ Module Make (P : MiniDecidableSet)
         eapply insertion_occursIn; eauto.
         eapply insertion_owns_rev; eauto.
         replace (length (s • (t0, a))) with (length s').
-        intuition.
+        intuition auto with *.
         assert (k1 < length (s • (t0,a))) by eauto with nth_error.
         autorewrite with length in H1; simpl in H1.
-        intuition.
+        intuition auto with *.
         symmetry; replace (length (s • (t0,a))) with (S (length s)).
         eapply insertion_length;eauto.
         autorewrite with length; simpl; lia.
@@ -767,7 +768,7 @@ Module Make (P : MiniDecidableSet)
         } 
        assert (exists i1, insertion_rel i (length s) i0 i1) as [i1 h_i1].
         {
-          assert (i0 < S (length s)) as h_lt by intuition.
+          assert (i0 < S (length s)) as h_lt by intuition auto with *.
           assert (applicative (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
           {
             assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
@@ -777,7 +778,7 @@ Module Make (P : MiniDecidableSet)
         }
         assert (exists k1, insertion_rel i (length s) k0 k1) as [k1 h_k1].
         {
-          assert (k0 < S (length s)) as h_lt by intuition.
+          assert (k0 < S (length s)) as h_lt by intuition auto with *.
           assert (applicative (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
           {
             assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
@@ -787,7 +788,7 @@ Module Make (P : MiniDecidableSet)
         }
         assert (exists j1, insertion_rel i (length s) j0 j1) as [j1 h_j1].
         {
-          assert (k0 < S (length s)) as h_lt by intuition.
+          assert (k0 < S (length s)) as h_lt by intuition auto with *.
           assert (applicative (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
           {
             assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
@@ -829,7 +830,7 @@ Module Make (P : MiniDecidableSet)
                { 
                  wellFormed_occurences (Open p').
                }
-               intuition.
+               intuition auto with *.
             - 
               assert (i1 <> k1) as Hdi1k1. 
               {
@@ -866,11 +867,11 @@ Module Make (P : MiniDecidableSet)
                   assert (synchronizeWith (s • (t0,a)) i0 (length s)).
                   {
                     constructor 1.
-                    constructor 1 with t0;intuition. 
+                    constructor 1 with t0;intuition auto with *. 
                     autorewrite with nth_error;simpl;auto.
                   }
                   destruct (Compare_dec.lt_dec i0 i); [assumption|].
-                  elim (Hns i0); intuition. 
+                  elim (Hns i0); intuition auto with *. 
                 }
                 assert (i0 = i1).
                 {
@@ -890,7 +891,7 @@ Module Make (P : MiniDecidableSet)
                    contradict Hneqpp';auto.
                  }
                 assert (i1 <k1) as Hi1k1. 
-                { apply insertion_order with i (length s) i0 k0;intuition.
+                { apply insertion_order with i (length s) i0 k0;intuition auto with *.
                   eapply insertion_defined_rev; eauto.
                 }
                 lia.
@@ -930,12 +931,12 @@ Module Make (P : MiniDecidableSet)
                 assert (synchronizeWith (s • (t0,a)) k0 (length s)).
                 {
                   constructor 1.
-                  constructor 1 with t0; intuition. 
+                  constructor 1 with t0; intuition auto with *. 
                   rewrite <- Hti0.
                   auto.
                 }
                 destruct (Compare_dec.lt_dec k0 i); [assumption|].
-                elim (Hns k0); intuition.
+                elim (Hns k0); intuition auto with *.
               }
               assert (k0 =k1) as Heqk. 
               {
@@ -946,7 +947,7 @@ Module Make (P : MiniDecidableSet)
               lia.
             + assert (k1 < j1).
               {
-                apply insertion_order with i (length s) k0 j0;intuition.
+                apply insertion_order with i (length s) k0 j0;intuition auto with *.
                 eapply insertion_defined_rev; eauto.
                 assert (k0 <> j0) as Hneqk0j0.
                 {
@@ -1057,7 +1058,7 @@ Module Make (P : MiniDecidableSet)
           assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
           now destruct (insertion_rel_bijective _ _ h_lt2).
         }
-        apply h_app; intuition.
+        apply h_app; intuition auto with *.
       }
      
       assert (exists j1, insertion_rel i (length s) j1 j0) as [j1 h_j1].
@@ -1065,7 +1066,7 @@ Module Make (P : MiniDecidableSet)
         assert (j0 < length s') as h_lt. 
         {
           inversion Hr;eauto with nth_error.
-          intuition.
+          intuition auto with *.
         }
         assert (surjective (fun k : threadId => k < S (length s)) (insertion_rel i (length s))) as h_app.
         {
@@ -1275,7 +1276,7 @@ Module Make (P : MiniDecidableSet)
            assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
            now destruct (insertion_rel_bijective _ _ h_lt2).
          }
-         apply h_app; intuition.
+         apply h_app; intuition auto with *.
        }
         assert (exists k1, insertion_rel i (length s) k1 k0) as [k1 h_k1].
         {
@@ -1285,7 +1286,7 @@ Module Make (P : MiniDecidableSet)
            assert (i <= length s) as h_lt2 by (eapply insertion_defined_rev; eauto).
            now destruct (insertion_rel_bijective _ _ h_lt2).
          }
-         apply h_app; intuition.
+         apply h_app; intuition auto with *.
         }
         assert (action_of (pi i1 (s • (t0, a))) == Open p) as Hi1. 
         {
@@ -1386,10 +1387,10 @@ Module Make (P : MiniDecidableSet)
           assert (i2 < length (s • (t,a))).
           apply synchronizeWithIn with i1.
           constructor; assumption.
-          intuition.
+          intuition auto with *.
           autorewrite with length in H3.
           simpl in H3.
-          intuition.
+          intuition auto with *.
         }
         destruct (Peano_dec.eq_nat_dec i2 (length s)).
         - subst.
@@ -1401,7 +1402,7 @@ Module Make (P : MiniDecidableSet)
             assert (i <= i1 < length s).
             {
               split.
-              intuition.
+              intuition auto with *.
               apply synchronizeWithOrder with (s• (t,a)).
               constructor; assumption.
             }
@@ -1410,7 +1411,7 @@ Module Make (P : MiniDecidableSet)
           }
 
           now replace j1 with i1 by now apply insertion_rel_fst_left with i (length s).
-        - assert (i2 < length s) by intuition.
+        - assert (i2 < length s) by intuition auto with *.
           
           now apply insertion_order with i (length s) i1 i2.
       }
@@ -1456,7 +1457,7 @@ Module Make (P : MiniDecidableSet)
         {
           assert (i0 < i2) by 
               now apply synchronizeWithOrder with (s•(t,a)).
-          intuition.
+          intuition auto with *.
         }
         destruct (h_applicative i0 h_i0) as [j0 h_j0].
         exists j0.
@@ -1466,12 +1467,12 @@ Module Make (P : MiniDecidableSet)
           {
             assert (i2 < S (length s)).
               {
-                intuition.
+                intuition auto with *.
               }
             assert (i0 < i2) by now apply synchronizeWithOrder with (s•(t,a)).
-            intuition.
+            intuition auto with *.
           }
-          apply insertion_order with i (length s) i1 i0; first [assumption | intuition].
+          apply insertion_order with i (length s) i1 i0; first [assumption | intuition auto with *].
         - destruct (Peano_dec.eq_nat_dec i2 (length s)).
           + subst.
             replace j2 with i in * by now (symmetry; apply insertion_rel_fst_last with (length s)).
@@ -1481,7 +1482,7 @@ Module Make (P : MiniDecidableSet)
               assert (i <= i0 < length s).
               {
                 split.
-                intuition.
+                intuition auto with *.
                 apply synchronizeWithOrder with (s•(t,a)).
                 assumption.
               }
@@ -1490,7 +1491,7 @@ Module Make (P : MiniDecidableSet)
             }
             now replace j0 with i0 by now apply insertion_rel_fst_left with i (length s).
           + assert (i0 < i2) by now apply synchronizeWithOrder with (s • (t,a)).
-            assert (i2 < length s) by intuition.
+            assert (i2 < length s) by intuition auto with *.
             now apply insertion_order with i (length s) i0 i2.
         - assumption.
       }
@@ -1536,7 +1537,7 @@ Module Make (P : MiniDecidableSet)
         assumption.
         assumption.
         subst.
-        intuition.
+        intuition auto with *.
         destruct (Peano_dec.eq_nat_dec j2 (length s)).
       subst.
       assert (i2 = i).
@@ -1544,12 +1545,12 @@ Module Make (P : MiniDecidableSet)
       apply insertion_defined_rev with (t,a).
       exists s'; assumption.
       assumption.
-      subst; exfalso; intuition.
+      subst; exfalso; intuition auto with *.
       assert (i <= length s) by (eapply insertion_defined_rev; eauto).
       assert (j2 <= length s).
       destruct (insertion_rel_lt _ _ H0 _ _ h_insert2).
       assumption.
-      intuition.
+      intuition auto with *.
     }
     generalize (h_no_sync j2 h_a); intro.
     elim H0.
@@ -1571,7 +1572,7 @@ Module Make (P : MiniDecidableSet)
       apply WF2 with t0.
       assumption.
       assumption.
-      exfalso; intuition.
+      exfalso; intuition auto with *.
     + assert (threadId_of (pi (length s) (s • (t,a))) == t0).
       unfold Event.t in *; rewrite H1; assumption.
       assert (action_of (pi j2 (s • (t,a))) == Join t0).
@@ -1583,7 +1584,7 @@ Module Make (P : MiniDecidableSet)
       left.
       assumption.
       assumption.
-      exfalso; intuition.
+      exfalso; intuition auto with *.
     + assert (exists k1 t0, 
                 j2 < k1 < length s /\ action_of (pi k1 (s •(t,a)))== Open p 
                 /\ threadId_of (pi k1 (s•(t,a))) == t0 /\ threadId_of (pi (length s) (s • (t,a))) == t0).
@@ -1628,7 +1629,7 @@ Module Make (P : MiniDecidableSet)
             wellFormed_occurences (Close p).
           }
           subst.
-          exfalso; intuition.
+          exfalso; intuition auto with *.
         - inversion H10; subst.
           assert (j2 < i0). 
           {
@@ -1658,7 +1659,7 @@ Module Make (P : MiniDecidableSet)
           assumption.
       }
       destruct H7 as [k1 [t0 [h_b [h_c [h_d h_e]]]]].
-      assert (i <= k1 < length s) by intuition.
+      assert (i <= k1 < length s) by intuition auto with *.
       elim (h_no_sync k1 H7).
       constructor 1.
       constructor 1 with t0.
@@ -1752,7 +1753,7 @@ Module Make (P : MiniDecidableSet)
     - unfold Event.t in *.
       replace (length (s • (t,a))) with (S (length s)) 
         in *
-        by (autorewrite with length in *; simpl in *; intuition).
+        by (autorewrite with length in *; simpl in *; intuition auto with *).
       replace (length s') with (S (length s) ) 
         in *.
       assert (i <= length s) by eauto using insertion_defined_rev.

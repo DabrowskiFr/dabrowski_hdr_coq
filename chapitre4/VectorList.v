@@ -1,13 +1,13 @@
 Require Import Monad.
-Require Import List.
-Require Import Coq.Arith.Compare_dec.
-Require Import Coq.Program.Basics.
+From Stdlib Require Import List.
+From Stdlib Require Import Arith.Compare_dec.
+From Stdlib Require Import Program.Basics.
 Require Import Vector.
-Require Import Coq.Classes.EquivDec.
-Require Import Utf8.
-Require Import Coq.Logic.FunctionalExtensionality.
-Require Import Lia.
-Require Import Nat.
+From Stdlib Require Import Classes.EquivDec.
+From Stdlib Require Import Utf8.
+From Stdlib Require Import Logic.FunctionalExtensionality.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Arith.PeanoNat.
 
 Open Scope functor_scope.
 
@@ -59,7 +59,7 @@ Qed.
 Fixpoint vectmake n A (f : nat -> A) : vect A n :=
   match n with
     0 => nil A
-  | S n => cons _ (f 0) _ (vectmake n A (f ∘ (add 1)))
+  | S n => cons _ (f 0) _ (vectmake n A (f ∘ (Nat.add 1)))
   end.
 
 Fixpoint nth (n : nat) (A : Type) (i : nat) (v : vect A n) : option A :=
@@ -120,7 +120,7 @@ Proof.
     + destruct 1 as [x Hx].
       destruct i; discriminate.
     + destruct 1 as [y Hy].
-      destruct i; [intuition |].
+      destruct i; [lia |].
       assert (i < n) by eauto.
       lia.
   - revert i.
@@ -367,13 +367,13 @@ Proof.
     destruct (vect__S _ _ v') as [y [v0' H__EQ2]].
     subst.
     f_equal.
-    + assert (0 < S n) by intuition.
+    + assert (0 < S n) by lia.
       generalize (H 0 H0); intro.
       injection H1; intros; subst.
       reflexivity.
     + apply IHn.
       intros i H0.
-      assert (S i < S n) by intuition.
+      assert (S i < S n) by lia.
       apply (H (S i) H1).
 Qed.
 
@@ -432,8 +432,12 @@ Proof.
     + right.
       subst.
       contradict H0.
-      injection H0; intros; subst.
-      intuition.
+      apply extensionality.
+      intros i Hi.
+      assert (nth (S i) (cons A a1 n v1') = nth (S i) (cons A a2 n v2')) as Hnth
+        by now rewrite H0.
+      simpl in Hnth.
+      exact Hnth.
 Qed.
 
 Lemma erase_prop_ :
@@ -475,12 +479,29 @@ Proof.
       simpl.
       destruct (vect__S _ _ v') as [v'0 [HA HB]]; subst.
       simpl in H.
-      injection H; intros; subst.
-      assert (v = vectmap Some HA) by intuition.
-      apply IHv in H1.
+      assert (x = Some v'0) as Hx.
+      {
+        assert (nth 0 (cons (option A0) x n v) =
+                nth 0 (vectmap Some (cons A0 v'0 n HA))) as Hnth
+          by now rewrite H.
+        simpl in Hnth.
+        congruence.
+      }
+      assert (v = vectmap Some HA) as Hv.
+      {
+        apply extensionality.
+        intros i Hi.
+        assert (nth (S i) (cons (option A0) x n v) =
+                nth (S i) (vectmap Some (cons A0 v'0 n HA))) as Hnth
+          by now rewrite H.
+        simpl in Hnth.
+        exact Hnth.
+      }
+      rewrite Hx.
+      apply IHv in Hv.
       * case_eq (erase_ n A0 v).
         -- intros v0 Ha.
-           rewrite H1 in Ha.
+           rewrite Hv in Ha.
            injection Ha; intros; subst.
            reflexivity.
         -- intros Ha.

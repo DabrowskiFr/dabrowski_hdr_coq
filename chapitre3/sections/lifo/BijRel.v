@@ -1,6 +1,5 @@
-Require Import Lt.
-Require Import Peano_dec.
-Require Import Lia.
+From Stdlib Require Import Arith Peano_dec.
+From Stdlib Require Import Lia.
 (******************************************************)
 (* caracterisation of relations *)
 

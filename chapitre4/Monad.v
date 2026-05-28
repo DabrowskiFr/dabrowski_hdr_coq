@@ -1,8 +1,8 @@
-Require Import Utf8.
-Require Import Coq.Program.Basics.
-Require Import Coq.Logic.FunctionalExtensionality.
-Require Import List.
-Require Import Morphisms.
+From Stdlib Require Import Utf8.
+From Stdlib Require Import Program.Basics.
+From Stdlib Require Import Logic.FunctionalExtensionality.
+From Stdlib Require Import List.
+From Stdlib Require Import Morphisms.
 Require Import Prelude.
 
 Open Scope program_scope.
@@ -68,14 +68,14 @@ Inductive Dual_ a := Dual { getDual : a }.
     mempty := Dual A mempty;
     mappend x y := match (x,y) with (Dual _ x, Dual _ y) => Dual A (mappend x y) end
   }.
-Admitted.
+Qed.
 
 #[export] Instance monoid_endo (A : Type) : Monoid (Endo_ A) :=
   {
     mempty := Endo _ id;
     mappend x y := match (x,y) with (Endo _ f, Endo _ g) => Endo _ (f ∘ g) end
   }.
-Admitted. *)
+Qed. *)
 
 (* Class Foldable (f : Type -> Type) : Type :=
   {
@@ -122,6 +122,8 @@ Definition liftA2 (f : Type -> Type) `{E : Applicative f} (A B C : Type) (g : A 
            (a : f A) (b : f B) : f C :=
   @ap f _ _ _ _ (fmap g a) b.
 
+Declare Scope functor_scope.
+Declare Scope monad_scope.
 
 Infix "<$>" := fmap (at level 28, left associativity, only parsing) : functor_scope.
 

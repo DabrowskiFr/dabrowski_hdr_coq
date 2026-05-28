@@ -1,4 +1,4 @@
-Require Import Lt Peano_dec Compare_dec Relation_Operators List Morphisms.
+From Stdlib Require Import Arith Peano_dec Compare_dec Relations.Relation_Operators List Morphisms.
 From sections.lifo Require Import Prelude BijRel.
 From sections.traces Require Import Synchronisation.
 
@@ -17,6 +17,7 @@ Module Make (P : MiniDecidableSet)
 
   Definition compatible (s1 s2 : Tr) := exists R, compatible_by R s1 s2.
 
+  Declare Scope trace_scope.
   Infix "~=" :=compatible (at level 70):trace_scope. 
 
   Open Scope trace_scope.

@@ -1,5 +1,5 @@
-Require Import List.
-Require Import Nat.
+From Stdlib Require Import List.
+From Stdlib Require Import Nat.
 
 Require Import sections.lifo.Nth.
 Require Import sections.lifo.Length.
@@ -19,7 +19,7 @@ Proof.
   rewrite nth'_nth with (d:=a).
   rewrite nth'_nth with (d:=a).
   apply rev_nth.
-  rewrite rev_length in nrevlst.
+  rewrite length_rev in nrevlst.
   assumption.
 Qed. 
 

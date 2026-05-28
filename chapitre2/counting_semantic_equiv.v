@@ -28,7 +28,7 @@ Section equiv.
   | equiv_val_null : equiv_val S1.Null S2.Null
   | equiv_val_loc : forall m1 m2, 
     m1 ~ml m2 -> equiv_val (S1.Loc m1) (S2.Loc m2).
-  Hint Constructors equiv_val.
+  Hint Constructors equiv_val : core.
   Notation "x ~v y" := (equiv_val x y) (at level 10).
 
   Definition equiv_local (l1:S1.local) (l2:S2.local) : Prop := 
@@ -48,7 +48,7 @@ Section equiv.
   Inductive equiv_bot (A1 A2:Set) (equiv:A1->A2->Prop) : option A1 -> option A2 -> Prop :=
   | equiv_bot_none : equiv_bot A1 A2 equiv None None
   | equiv_bot_some : forall a1 a2, equiv a1 a2 -> equiv_bot A1 A2 equiv (Some a1) (Some a2).
-  Implicit Arguments equiv_bot [A1 A2].
+  Arguments equiv_bot {A1 A2} _ _ _.
   
   Definition equiv_heap (h1:S1.heap) (h2:S2.heap) : Prop := 
     (forall m1, h1 m1 <> None ->
@@ -99,7 +99,7 @@ Section equiv.
     intros y; unfold S1.subst, S2.subst. 
     comp x y; auto.
   Qed.
-  Hint Resolve equiv_subst.
+  Hint Resolve equiv_subst : core.
 
   Lemma equiv_updatefield : forall o1 o2 f v1 v2,
     v1 ~v v2 -> o1 ~o o2 -> (S1.updateField o1 f v1) ~o (S2.updateField o2 f v2).
@@ -108,7 +108,7 @@ Section equiv.
     intros y; unfold S1.updateField, S2.updateField.
     comp f y; auto.
   Qed.
-  Hint Resolve equiv_updatefield.
+  Hint Resolve equiv_updatefield : core.
 
 Lemma He : forall o1 o1' o2, o1 ~ml o2 -> o1' ~ml o2 -> o1=o1'.
 Proof.
@@ -823,7 +823,6 @@ Proof.
   rewrite class_make_new_context in H5; auto.
   inv H5.
   econstructor 2; eauto.
-  rewrite H2; auto.
   generalize (equiv_stack_length _ _ H1).
   congruence.
   repeat (constructor; auto).
@@ -835,9 +834,9 @@ Proof.
     (generalize (equiv_stack_length _ _ H1); congruence).
   rewrite <- H0 in *.
   destruct (le_gt_dec (S x) (length args)).
-  rewrite H10; try omega.
+  rewrite H10; try lia.
   apply equiv_stack_nth; auto.
-  rewrite H11; try omega; constructor.
+  rewrite H11; try lia; constructor.
   (* return *)
   exists (None:S2.action).
   inv Hcs.
@@ -929,15 +928,15 @@ Proof.
   auto.
   unfold rho1'; intros.
   destruct x.
-  apply False_ind; omega.
+  apply False_ind; lia.
   destruct (le_gt_dec (S x) (length args)).
   auto.
-  apply False_ind; omega.
+  apply False_ind; lia.
   unfold rho1'; intros.
   destruct x.
-  apply False_ind; omega.
+  apply False_ind; lia.
   destruct (le_gt_dec (S x) (length args)).
-  apply False_ind; omega.
+  apply False_ind; lia.
   auto.
   generalize (equiv_stack_length _ _ H1); congruence.
   repeat constructor.
@@ -1092,8 +1091,7 @@ Proof.
   split.
   econstructor 2; unfold o in *; eauto.
   simpl in H13; rewrite class_make_new_context in H13.
-  inv H13.
-  rewrite H1 in *.
+  injection H13 as Hcid; subst cid.
   auto.
   auto.
   destruct H6.
@@ -1878,8 +1876,9 @@ Proof.
   left; auto.
   generalize init_equiv; unfold S1.init, S2.init.
   intuition.
-  unfold S1.init, location in *.
-  congruence.
+  inversion H3.
+  unfold S1.init in H.
+  inversion H; reflexivity.
   destruct st as [[[L0 sigma0]mu0]omg0].
   destruct IHreachable_h as [ls1 [L1 [sigma1 [B [B1 [B2 B3]]]]]].
   elim step_equiv2 with (L1:=L1) (sigma1:=sigma1) (7:=H0); auto.
@@ -1911,4 +1910,3 @@ Qed.
 End equiv.
 
 End CountingSemanticEquiv.
-

@@ -1,5 +1,5 @@
 Require Export domain_prop.
-Require Export List.
+From Stdlib Require Export List.
 
 Module WF1 (Import S:COUNTING_SEMANTIC). 
 
@@ -274,7 +274,7 @@ rewrite H0.
 unfold invoke_mVect.
 unfold conv_mVect.
 rewrite MVect.get_upd1.
-omega.
+lia.
 
 assert (frame_coherency fr omg).
 destruct H0.
@@ -288,7 +288,7 @@ destruct fr as [[[m2 i2 c2 om2 pi2]s2]rho2].
 unfold frame_coherency in H1 |-*.
 simpl in *.
 generalize (incr_mVect_prop omg m1 (C.make_call_context m i c (C.make_new_context m0 i0 cId c0)) m2 c2).
-omega.
+lia.
 
 eauto using in_cons.
 destruct H2.
@@ -301,17 +301,17 @@ eauto using in_cons.
 assert (forall m c, omg m c <= omg' m c).
 inv H15.
 intros.
-omega.
+lia.
 intros.
 exact (incr_mVect_prop omg m1  (C.make_call_context m i c (C.make_new_context m0 i0 cId c0)) m2 c1).
-intros; omega.
-intros; omega.
+intros; lia.
+intros; lia.
 assert (frame_coherency fr omg) by eauto.
 destruct fr as [[[m2 i2 c2 om2 pi2]?]?].
 unfold frame_coherency in H3 |-*.
 simpl in *.
 generalize (H0 m2 c2).
-omega.
+lia.
 
 unfold upd_thread in H1.
 simpl in *.
@@ -325,7 +325,7 @@ unfold invoke_mVect.
 unfold incr_mVect.
 unfold conv_mVect.
 repeat rewrite MVect.get_upd1.
-omega.
+lia.
 elim H0; reflexivity.
 
 Case'.
@@ -339,7 +339,7 @@ simpl in *.
 intros.
 generalize (incr_mVect_prop omg m1 (C.make_call_context m i c (C.make_new_context m0 i0 cId c0)) m c).
 intro.
-omega.
+lia.
 
 assert (frame_coherency fr omg) by eauto using in_cons.
 destruct fr as [[[m2 i2 c2 om2 pi2]s2]rho2].
@@ -348,7 +348,7 @@ simpl in *.
 intros.
 generalize (incr_mVect_prop omg m1 (C.make_call_context m i c (C.make_new_context m0 i0 cId c0)) m2 c2).
 intro.
-omega.
+lia.
 
 assert (frame_coherency fr omg) by eauto using in_eq.
 destruct fr as [[[m2 i2 c2 om2 pi2]s2]rho2].
@@ -357,7 +357,7 @@ simpl in *.
 intros.
 generalize (incr_mVect_prop omg m1 (C.make_call_context m i c (C.make_new_context m0 i0 cId c0)) m2 c2).
 intro.
-omega.
+lia.
 
 unfold upd_thread in H1.
 MLtac' o l.
@@ -431,7 +431,7 @@ unfold dcounter.
 intros.
 simpl in H4.
 subst.
-omega.
+lia.
 
 eapply H; eauto.
 Qed.
@@ -585,7 +585,7 @@ unfold frame_coherency in H4.
 simpl in H4.
 intros.
 subst.
-omega.
+lia.
 destruct H4.
 subst.
 eapply dcounter_intra.
@@ -602,7 +602,7 @@ unfold frame_coherency in H5.
 simpl in H5.
 intros.
 subst.
-omega.
+lia.
 apply dcounter_sym.
 destruct H5.
 subst.
@@ -627,7 +627,7 @@ unfold gunicity, upd_thread.
 intros.
 MLtac' l' l0.
 inj H5.
-inv H7 ; [idtac | tauto]. 
+destruct H7 as [H7 | H7]; [subst | contradiction].
 
 assert (frame_coherency fr' omg).
 MLtac' l0 l'0; [elim H4; reflexivity | idtac].
@@ -647,11 +647,11 @@ unfold frame_coherency in H5.
 simpl in H5.
 intros.
 subst. 
-omega.
+lia.
 
 MLtac' l' l'0.
 inj H6.
-destruct H8; [idtac | tauto].
+destruct H8 as [H8 | H8]; [subst | contradiction].
 subst.
 
 assert (frame_coherency fr omg).
@@ -670,7 +670,7 @@ intros.
 subst.
 unfold frame_coherency in H6.
 simpl in H6.
-omega.
+lia.
 
 
 MLtac' l l0.

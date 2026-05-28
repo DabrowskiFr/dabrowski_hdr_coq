@@ -5,13 +5,14 @@
 (** printing -> #&#x02192;# *)
 (** printing • #&#8226;# *)
 
-Require Import List Arith.
+From Stdlib Require Import List Arith.
 Require Import sections.lifo.Prelude.
+Require Import sections.lifo.ListBasics.
 Require Import sections.common.GenericTrace.
 Require Import sections.traces.Trace_Basics.
 Require Import sections.lifo.Length.
-Require Import Lia.
-Require Import Coq.Logic.Classical_Prop.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Logic.Classical_Prop.
 
 
 (** In this section, we introduce some results about well formed trace.
@@ -67,14 +68,13 @@ Module Make (SN : MiniDecidableSet)
     assert (i < k <= j).
     {
       split.
-      - destruct (Lt.nat_total_order i k).
-        intro;subst.
-        assert (action_of (pi k s) == Open p) by  
-            (inversion range_s_p_i_j; subst; assumption).
-        rewrite H3 in H; discriminate.
-        assumption.
-        destruct H1.
-        apply Lt.le_not_lt in H0; intuition.
+      - destruct H1 as [Hik _].
+        destruct (Nat.eq_dec i k) as [Heq | Hneq].
+        + subst.
+          assert (action_of (pi k s) == Open p) by
+              (inversion range_s_p_i_j; subst; assumption).
+          rewrite H3 in H; discriminate.
+        + lia.
       - apply H1.
     }
     destruct HTribe;
@@ -230,16 +230,22 @@ Module Make (SN : MiniDecidableSet)
           auto with *.
         }
         unfold concurrent; intuition eauto.
-        admit.
-        admit.
+        - exists i; assumption.
+        - exists k; assumption.
       }
       destruct (h_wf_me _ _ Ha) as [h_precedes_p_p' | h_precedes_p'_p]; subst.
       + assert (j < k).
         {
           inversion h_precedes_p_p' as [j' k' h_lt Hu Hv Hw]; subst.
           assert (k' = k) by wellFormed_occurences (Open p').
-          assert (j'= j ) by admit.
-              (* (inversion h_range; subst; [wellFormed_occurences (Close p) | elim HNotClosed; eauto]). *)
+          assert (j'= j ).
+          {
+            inversion h_range; subst.
+            - wellFormed_occurences (Close p).
+            - exfalso.
+              apply HNotClosed.
+              exists j'; assumption.
+          }
           congruence.
         }
         auto with *.
@@ -253,8 +259,7 @@ Module Make (SN : MiniDecidableSet)
           subst; auto with *.
         }
         auto with *.
-  Admitted.
-        (* Qed. *)
+  Qed.
   
   (** Only tribe members can open sections in sections *)
   
@@ -296,49 +301,69 @@ Module Make (SN : MiniDecidableSet)
   Proof.
     intros s t a h_wf h_conflict p' h_neq_open; subst.
     destruct h_conflict as [p [ [ [i h_range] h_neq_open]  h_neq_tribe] ].
+    assert (i < length s) as Hi_lt.
+    {
+      inversion h_range as [i0 Hi0 j0 Hj0 | i0 Hi0 HNotClosed]; subst.
+      - eapply (lift_nth_error_defined_left (threadId * action) action
+                                             i (@snd threadId action) s).
+        exists (Open p); exact Hi0.
+      - eapply (lift_nth_error_defined_left (threadId * action) action
+                                             i (@snd threadId action) s).
+        exists (Open p); exact Hi0.
+    }
+    assert (action_of (pi i (s • (t, Open p'))) == Open p) as Hopen_i_se.
+    {
+      inversion h_range as [i0 Hi0 j0 Hj0 | i0 Hi0 HNotClosed]; subst;
+        unfold lift in Hi0 |- *;
+        rewrite nth_error_append_left by exact Hi_lt;
+        exact Hi0.
+    }
     assert (tribe s p t).
     {
       assert (tribe (s • (t, Open p')) p t).
       { 
-        assert (range (s • (t, Open p')) p i (length s)).
-        {
-          replace (length s) with (length (s • (t, Open p')) - 1)
-            by admit.
-            (* by (autorewrite with length; simpl; lia). *)
+          assert (range (s • (t, Open p')) p i (length s)).
+          {
+            replace (length s) with (length (s • (t, Open p')) - 1)
+              by (rewrite length_app; simpl; lia).
           constructor 2.
-          inversion h_range; eauto with nth_error.
+          exact Hopen_i_se.
           contradict h_neq_open.
           apply occursIn_se_s_neq with t (Open p').
           assumption.
           discriminate.
         }
-        assert (i < length s) by 
-        
-        (inversion h_range; intuition (eauto with nth_error)).
-        apply open_in_tribe with i (length s) (length s) p'; admit.
-          (* [assumption | assumption | intuition | pi_simpl | pi_simpl]. *)
+        apply open_in_tribe with i (length s) (length s) p'.
+        - assumption.
+        - assumption.
+        - lia.
+        - unfold lift; rewrite pi_length_cons; reflexivity.
+        - unfold lift; rewrite pi_length_cons; reflexivity.
       }
-      assert (p <> p').
+      assert (p <> p') as Hp_ne_p'.
       {
-        intro; subst.
-        assert (i < length s) by (inversion h_range; eauto with nth_error).
+        intro Hp_eq; subst p'.
         assert (i = length s).
         {
-          assert (action_of (pi i (s • (t, Open p'))) == Open p') 
-            by (inversion h_range; eauto with nth_error).
-          assert (action_of (pi (length s) (s • (t, Open p'))) == Open p') 
-            by admit.
-            (* pi_simpl. *)
-          wellFormed_occurences (Open p').
+          assert (action_of (pi (length s) (s • (t, Open p))) == Open p)
+            by apply action_of_last.
+          wellFormed_occurences (Open p).
         }
-        auto with *.
+        lia.
       }
-      apply tribe_se_s_not_open_fork with (t, Open p'); 
-        first [ inversion h_wf; assumption | congruence].
+      eapply (tribe_se_s_not_open_fork s (t, Open p') p t).
+      - inversion h_wf; assumption.
+      - inversion h_wf; assumption.
+      - inversion h_wf; assumption.
+      - exact H.
+      - intro Heq.
+        inversion Heq; subst.
+        congruence.
+      - intros t' Heq.
+        discriminate.
     }
     now contradict h_neq_tribe.
-    Admitted.
-  (* Qed. *)
+  Qed.
 
   
 
@@ -348,7 +373,11 @@ Module Make (SN : MiniDecidableSet)
     forall (s : Tr)  (HWF : wellFormed s) (t : threadId), 
       (forall p, ~ exclude s p t) \/ (exists p, outerExclude s p t).
   Proof.
-  Admitted. (* TODO : exclude_dec *)
+    intros s HWF t.
+    destruct (outerExcludef s t) as [p|] eqn:Houter.
+    - right. exists p. now apply outerExcludefIsOuter.
+    - left. now apply outerExcludefNone.
+  Qed.
 
 End Make.
 
